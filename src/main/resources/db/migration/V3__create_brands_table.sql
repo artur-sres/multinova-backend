@@ -1,0 +1,6 @@
+CREATE TABLE brands (
+    id BIGSERIAL PRIMARY KEY,
+
+    user_id BIGSERIAL NOT NULL REFERENCES users(id),
+    name VARCHAR(150) NOT NULL
+)
