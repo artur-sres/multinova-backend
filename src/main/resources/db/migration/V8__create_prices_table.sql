@@ -1,0 +1,10 @@
+CREATE TABLE prices (
+    id BIGSERIAL PRIMARY KEY,
+
+    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+
+    purchase_price NUMERIC(10,2) NOT NULL,
+    sale_price NUMERIC(10,2) NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

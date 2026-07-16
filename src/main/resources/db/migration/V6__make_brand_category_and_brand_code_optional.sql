@@ -1,0 +1,4 @@
+ALTER TABLE products
+    ALTER COLUMN brand_id DROP NOT NULL,
+    ALTER COLUMN category_id DROP NOT NULL,
+    ALTER COLUMN brand_code DROP NOT NULL;
