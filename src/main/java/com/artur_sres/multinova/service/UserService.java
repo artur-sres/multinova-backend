@@ -1,13 +1,14 @@
 package com.artur_sres.multinova.service;
 
-import com.artur_sres.multinova.domain.Product;
 import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.dto.UserCreateDTO;
 import com.artur_sres.multinova.dto.UserPatchDTO;
 import com.artur_sres.multinova.dto.UserResponseDTO;
+import com.artur_sres.multinova.exception.AccessDeniedException;
 import com.artur_sres.multinova.exception.EmailAlreadyRegisteredException;
 import com.artur_sres.multinova.exception.UserNotFoundException;
 import com.artur_sres.multinova.repository.UserRepository;
+import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +16,12 @@ import org.springframework.stereotype.Service;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder){
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticatedUserProvider authenticatedUserProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     public boolean existsByEmail(String email) {
@@ -47,6 +50,12 @@ public class UserService {
     }
 
     public UserResponseDTO searchByID(Long id) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        if (!currentUser.getId().equals(id)) {
+            throw new AccessDeniedException("You do not have permission to access this resource.");
+        }
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
 
@@ -60,9 +69,14 @@ public class UserService {
     }
 
     public UserResponseDTO update(Long id, UserPatchDTO dto) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        if (!currentUser.getId().equals(id)) {
+            throw new AccessDeniedException("You do not have permission to access this resource.");
+        }
+
         User user = userRepository.findById(id)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found."));
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
 
         if (dto.getName() != null) {
             user.setName(dto.getName());
