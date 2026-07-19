@@ -1,6 +1,7 @@
 package com.artur_sres.multinova.controller;
 
 import com.artur_sres.multinova.dto.UserCreateDTO;
+import com.artur_sres.multinova.dto.UserPatchDTO;
 import com.artur_sres.multinova.dto.UserResponseDTO;
 import com.artur_sres.multinova.service.UserService;
 import jakarta.validation.Valid;
@@ -28,4 +29,8 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userService.searchByID(id));
     }
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> updateUserByID(@PathVariable Long id, @Valid @RequestBody UserPatchDTO dto) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.update(id, dto));
+    }
 }
