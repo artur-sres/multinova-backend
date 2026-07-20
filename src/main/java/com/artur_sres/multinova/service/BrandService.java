@@ -10,6 +10,9 @@ import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class BrandService {
     private final BrandRepository brandRepository;
@@ -102,5 +105,21 @@ public class BrandService {
         }
 
         brandRepository.delete(brand);
+    }
+
+    public List<BrandResponseDTO> listAll() {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        List<Brand> brands = brandRepository.findByUserId(currentUser.getId());
+
+        return brands.stream()
+                .map(brand -> {
+                    BrandResponseDTO dto = new BrandResponseDTO();
+                    dto.setId(brand.getId());
+                    dto.setName(brand.getName());
+                    dto.setUserId(brand.getUser().getId());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

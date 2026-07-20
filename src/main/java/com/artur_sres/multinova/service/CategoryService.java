@@ -13,6 +13,9 @@ import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
@@ -105,5 +108,21 @@ public class CategoryService {
         }
 
         categoryRepository.delete(category);
+    }
+
+    public List<CategoryResponseDTO> listAll() {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        List<Category> categories = categoryRepository.findByUserId(currentUser.getId());
+
+        return categories.stream()
+                .map(brand -> {
+                    CategoryResponseDTO dto = new CategoryResponseDTO();
+                    dto.setId(brand.getId());
+                    dto.setName(brand.getName());
+                    dto.setUserId(brand.getUser().getId());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

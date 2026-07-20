@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @CrossOrigin(origins = "http://127.0.0.1:5500/")
 @RestController
 @RequestMapping("/brands")
@@ -37,5 +39,10 @@ public class BrandController {
     public ResponseEntity<Void> deleteBrandByID(@PathVariable Long id) {
         brandService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<BrandResponseDTO>> listBrands() {
+        return ResponseEntity.status(HttpStatus.OK).body(brandService.listAll());
     }
 }

@@ -1,5 +1,6 @@
 package com.artur_sres.multinova.controller;
 
+import com.artur_sres.multinova.dto.brand.BrandResponseDTO;
 import com.artur_sres.multinova.dto.category.CategoryRequestDTO;
 import com.artur_sres.multinova.dto.category.CategoryResponseDTO;
 import com.artur_sres.multinova.service.CategoryService;
@@ -7,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin(origins = "http://127.0.0.1:5500/")
 @RestController
@@ -37,5 +40,10 @@ public class CategoryController {
     public ResponseEntity<Void> deleteCategoryByID(@PathVariable Long id) {
         categoryService.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CategoryResponseDTO>> listCategories() {
+        return ResponseEntity.status(HttpStatus.OK).body(categoryService.listAll());
     }
 }
