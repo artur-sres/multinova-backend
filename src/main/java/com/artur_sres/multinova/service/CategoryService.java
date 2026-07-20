@@ -1,0 +1,109 @@
+package com.artur_sres.multinova.service;
+
+import com.artur_sres.multinova.domain.Category;
+import com.artur_sres.multinova.domain.User;
+import com.artur_sres.multinova.dto.category.CategoryRequestDTO;
+import com.artur_sres.multinova.dto.category.CategoryResponseDTO;
+import com.artur_sres.multinova.exception.AccessDeniedException;
+import com.artur_sres.multinova.exception.CategoryAlreadyExistsException;
+import com.artur_sres.multinova.exception.CategoryInUseException;
+import com.artur_sres.multinova.exception.CategoryNotFoundException;
+import com.artur_sres.multinova.repository.CategoryRepository;
+import com.artur_sres.multinova.repository.ProductRepository;
+import com.artur_sres.multinova.security.AuthenticatedUserProvider;
+import org.springframework.stereotype.Service;
+
+@Service
+public class CategoryService {
+    private final CategoryRepository categoryRepository;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ProductRepository productRepository;
+
+    public CategoryService(CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductRepository productRepository) {
+        this.categoryRepository = categoryRepository;
+        this.authenticatedUserProvider = authenticatedUserProvider;
+        this.productRepository =productRepository;
+    }
+
+    public CategoryResponseDTO searchById(Long id) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryNotFoundException("category not found."));
+
+        if (!currentUser.getId().equals(category.getUser().getId())) {
+            throw new AccessDeniedException("You do not have permission to access this resource.");
+        }
+
+        CategoryResponseDTO response = new CategoryResponseDTO();
+        response.setId(category.getId());
+        response.setName(category.getName());
+        response.setUserId(category.getUser().getId());
+
+        return response;
+    }
+
+    public CategoryResponseDTO create(CategoryRequestDTO dto){
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        if(categoryRepository.existsByNameAndUserId(dto.getName(), currentUser.getId())) {
+            throw new CategoryAlreadyExistsException("A category with this name already exists.");
+        }
+
+        Category category = new Category();
+        category.setName(dto.getName());
+        category.setUser(currentUser);
+
+        Category saved = categoryRepository.save(category);
+
+        CategoryResponseDTO response = new CategoryResponseDTO();
+        response.setId(saved.getId());
+        response.setName(saved.getName());
+        response.setUserId(saved.getUser().getId());
+
+        return response;
+    }
+
+    public CategoryResponseDTO update(Long id, CategoryRequestDTO dto) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryNotFoundException("category not found."));
+
+        if (!currentUser.getId().equals(category.getUser().getId())) {
+            throw new AccessDeniedException("You do not have permission to access this resource.");
+        }
+
+        if(categoryRepository.existsByNameAndUserIdAndIdNot(dto.getName(), currentUser.getId(), id)) {
+            throw new CategoryAlreadyExistsException("A category with this name already exists.");
+        }
+
+        category.setName(dto.getName());
+
+        categoryRepository.save(category);
+
+        CategoryResponseDTO response = new CategoryResponseDTO();
+        response.setId(category.getId());
+        response.setName(category.getName());
+        response.setUserId(category.getUser().getId());
+
+        return response;
+    }
+
+    public void delete(Long id) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new CategoryNotFoundException("category not found."));
+
+        if (!currentUser.getId().equals(category.getUser().getId())) {
+            throw new AccessDeniedException("You do not have permission to access this resource.");
+        }
+
+        if (productRepository.existsByCategoryId(id)) {
+            throw new CategoryInUseException("This category cannot be deleted because it is associated with one or more products.");
+        }
+
+        categoryRepository.delete(category);
+    }
+}

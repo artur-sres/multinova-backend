@@ -62,4 +62,22 @@ public class GlobalExceptionHandler {
         ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
     }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCategoryNotFound(CategoryNotFoundException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+    }
+
+    @ExceptionHandler(CategoryAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCategoryAlreadyExists(CategoryAlreadyExistsException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+    }
+
+    @ExceptionHandler(CategoryInUseException.class)
+    public ResponseEntity<ErrorResponse> handleCategoryInUse(CategoryInUseException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+    }
 }
