@@ -28,6 +28,14 @@ public class CategoryService {
         this.productRepository =productRepository;
     }
 
+    private CategoryResponseDTO toResponseDTO(Category category) {
+        CategoryResponseDTO dto = new CategoryResponseDTO();
+        dto.setId(category.getId());
+        dto.setName(category.getName());
+        dto.setUserId(category.getUser().getId());
+        return dto;
+    }
+
     public CategoryResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -38,12 +46,7 @@ public class CategoryService {
             throw new AccessDeniedException("You do not have permission to access this resource.");
         }
 
-        CategoryResponseDTO response = new CategoryResponseDTO();
-        response.setId(category.getId());
-        response.setName(category.getName());
-        response.setUserId(category.getUser().getId());
-
-        return response;
+        return toResponseDTO(category);
     }
 
     public CategoryResponseDTO create(CategoryRequestDTO dto){
@@ -57,14 +60,8 @@ public class CategoryService {
         category.setName(dto.getName());
         category.setUser(currentUser);
 
-        Category saved = categoryRepository.save(category);
-
-        CategoryResponseDTO response = new CategoryResponseDTO();
-        response.setId(saved.getId());
-        response.setName(saved.getName());
-        response.setUserId(saved.getUser().getId());
-
-        return response;
+        categoryRepository.save(category);
+        return toResponseDTO(category);
     }
 
     public CategoryResponseDTO update(Long id, CategoryRequestDTO dto) {
@@ -84,13 +81,7 @@ public class CategoryService {
         category.setName(dto.getName());
 
         categoryRepository.save(category);
-
-        CategoryResponseDTO response = new CategoryResponseDTO();
-        response.setId(category.getId());
-        response.setName(category.getName());
-        response.setUserId(category.getUser().getId());
-
-        return response;
+        return toResponseDTO(category);
     }
 
     public void delete(Long id) {
@@ -112,17 +103,10 @@ public class CategoryService {
 
     public List<CategoryResponseDTO> listAll() {
         User currentUser = authenticatedUserProvider.getCurrentUser();
-
         List<Category> categories = categoryRepository.findByUserId(currentUser.getId());
 
         return categories.stream()
-                .map(brand -> {
-                    CategoryResponseDTO dto = new CategoryResponseDTO();
-                    dto.setId(brand.getId());
-                    dto.setName(brand.getName());
-                    dto.setUserId(brand.getUser().getId());
-                    return dto;
-                })
+                .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }
 }

@@ -25,6 +25,14 @@ public class BrandService {
         this.productRepository =productRepository;
     }
 
+    private BrandResponseDTO toResponseDTO(Brand brand) {
+        BrandResponseDTO dto = new BrandResponseDTO();
+        dto.setId(brand.getId());
+        dto.setName(brand.getName());
+        dto.setUserId(brand.getUser().getId());
+        return dto;
+    }
+
     public BrandResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -35,12 +43,7 @@ public class BrandService {
             throw new AccessDeniedException("You do not have permission to access this resource.");
         }
 
-        BrandResponseDTO response = new BrandResponseDTO();
-        response.setId(brand.getId());
-        response.setName(brand.getName());
-        response.setUserId(brand.getUser().getId());
-
-        return response;
+        return toResponseDTO(brand);
     }
 
     public BrandResponseDTO create(BrandRequestDTO dto){
@@ -54,14 +57,8 @@ public class BrandService {
         brand.setName(dto.getName());
         brand.setUser(currentUser);
 
-        Brand saved = brandRepository.save(brand);
-
-        BrandResponseDTO response = new BrandResponseDTO();
-        response.setId(saved.getId());
-        response.setName(saved.getName());
-        response.setUserId(saved.getUser().getId());
-
-        return response;
+        brandRepository.save(brand);
+        return toResponseDTO(brand);
     }
 
     public BrandResponseDTO update(Long id, BrandRequestDTO dto) {
@@ -81,13 +78,7 @@ public class BrandService {
         brand.setName(dto.getName());
 
         brandRepository.save(brand);
-
-        BrandResponseDTO response = new BrandResponseDTO();
-        response.setId(brand.getId());
-        response.setName(brand.getName());
-        response.setUserId(brand.getUser().getId());
-
-        return response;
+        return toResponseDTO(brand);
     }
 
     public void delete(Long id) {
@@ -109,17 +100,10 @@ public class BrandService {
 
     public List<BrandResponseDTO> listAll() {
         User currentUser = authenticatedUserProvider.getCurrentUser();
-
         List<Brand> brands = brandRepository.findByUserId(currentUser.getId());
 
         return brands.stream()
-                .map(brand -> {
-                    BrandResponseDTO dto = new BrandResponseDTO();
-                    dto.setId(brand.getId());
-                    dto.setName(brand.getName());
-                    dto.setUserId(brand.getUser().getId());
-                    return dto;
-                })
+                .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }
 }
