@@ -1,7 +1,7 @@
 package com.artur_sres.multinova.controller;
 
-import com.artur_sres.multinova.dto.LoginRequestDTO;
-import com.artur_sres.multinova.dto.LoginResponseDTO;
+import com.artur_sres.multinova.dto.auth.LoginRequestDTO;
+import com.artur_sres.multinova.dto.auth.LoginResponseDTO;
 import com.artur_sres.multinova.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

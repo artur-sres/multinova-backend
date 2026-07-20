@@ -1,9 +1,9 @@
 package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.domain.User;
-import com.artur_sres.multinova.dto.UserCreateDTO;
-import com.artur_sres.multinova.dto.UserPatchDTO;
-import com.artur_sres.multinova.dto.UserResponseDTO;
+import com.artur_sres.multinova.dto.user.UserCreateDTO;
+import com.artur_sres.multinova.dto.user.UserPatchDTO;
+import com.artur_sres.multinova.dto.user.UserResponseDTO;
 import com.artur_sres.multinova.exception.AccessDeniedException;
 import com.artur_sres.multinova.exception.EmailAlreadyRegisteredException;
 import com.artur_sres.multinova.exception.UserNotFoundException;

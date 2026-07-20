@@ -1,8 +1,8 @@
 package com.artur_sres.multinova.controller;
 
-import com.artur_sres.multinova.dto.UserCreateDTO;
-import com.artur_sres.multinova.dto.UserPatchDTO;
-import com.artur_sres.multinova.dto.UserResponseDTO;
+import com.artur_sres.multinova.dto.user.UserCreateDTO;
+import com.artur_sres.multinova.dto.user.UserPatchDTO;
+import com.artur_sres.multinova.dto.user.UserResponseDTO;
 import com.artur_sres.multinova.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

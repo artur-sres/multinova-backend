@@ -1,4 +1,4 @@
-package com.artur_sres.multinova.dto;
+package com.artur_sres.multinova.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 

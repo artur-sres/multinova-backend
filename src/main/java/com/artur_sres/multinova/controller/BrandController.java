@@ -1,7 +1,7 @@
 package com.artur_sres.multinova.controller;
 
-import com.artur_sres.multinova.dto.BrandRequestDTO;
-import com.artur_sres.multinova.dto.BrandResponseDTO;
+import com.artur_sres.multinova.dto.brand.BrandRequestDTO;
+import com.artur_sres.multinova.dto.brand.BrandResponseDTO;
 import com.artur_sres.multinova.service.BrandService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

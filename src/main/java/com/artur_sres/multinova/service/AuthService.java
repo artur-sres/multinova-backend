@@ -1,8 +1,8 @@
 package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.domain.User;
-import com.artur_sres.multinova.dto.LoginRequestDTO;
-import com.artur_sres.multinova.dto.LoginResponseDTO;
+import com.artur_sres.multinova.dto.auth.LoginRequestDTO;
+import com.artur_sres.multinova.dto.auth.LoginResponseDTO;
 import com.artur_sres.multinova.exception.InvalidCredentialsException;
 import com.artur_sres.multinova.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;

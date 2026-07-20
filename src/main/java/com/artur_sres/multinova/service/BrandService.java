@@ -2,8 +2,8 @@ package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.domain.Brand;
 import com.artur_sres.multinova.domain.User;
-import com.artur_sres.multinova.dto.BrandRequestDTO;
-import com.artur_sres.multinova.dto.BrandResponseDTO;
+import com.artur_sres.multinova.dto.brand.BrandRequestDTO;
+import com.artur_sres.multinova.dto.brand.BrandResponseDTO;
 import com.artur_sres.multinova.exception.*;
 import com.artur_sres.multinova.repository.BrandRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
