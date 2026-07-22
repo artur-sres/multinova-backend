@@ -41,14 +41,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException exception) {
-        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.FORBIDDEN.value());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err);
     }
 
     @ExceptionHandler(BrandNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleBrandNotFound(BrandNotFoundException exception) {
-        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
     }
 
     @ExceptionHandler(BrandAlreadyExistsException.class)
@@ -71,12 +71,30 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CategoryAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleCategoryAlreadyExists(CategoryAlreadyExistsException exception) {
-        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
     }
 
     @ExceptionHandler(CategoryInUseException.class)
     public ResponseEntity<ErrorResponse> handleCategoryInUse(CategoryInUseException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+    }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotFound(ProductNotFoundException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
+
+    @ExceptionHandler(PriceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePriceNotFound(PriceNotFoundException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
+
+    @ExceptionHandler(SellPriceLowerThanBuyPriceException.class)
+    public ResponseEntity<ErrorResponse> sellPriceLowerThanBuyPrice(SellPriceLowerThanBuyPriceException exception) {
         ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
     }
