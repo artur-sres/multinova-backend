@@ -7,6 +7,7 @@ import com.artur_sres.multinova.dto.user.UserResponseDTO;
 import com.artur_sres.multinova.exception.AccessDeniedException;
 import com.artur_sres.multinova.exception.EmailAlreadyRegisteredException;
 import com.artur_sres.multinova.exception.UserNotFoundException;
+import com.artur_sres.multinova.mapper.UserMapper;
 import com.artur_sres.multinova.repository.UserRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,11 +20,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticatedUserProvider authenticatedUserProvider) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticatedUserProvider authenticatedUserProvider, UserMapper userMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.userMapper = userMapper;
     }
 
     public boolean existsByEmail(String email) {
@@ -43,13 +46,7 @@ public class UserService {
 
         User saved = userRepository.save(user);
 
-        UserResponseDTO response = new UserResponseDTO();
-        response.setId(saved.getId());
-        response.setName(saved.getName());
-        response.setEmail(saved.getEmail());
-        response.setCreatedAt(saved.getCreatedAt());
-
-        return response;
+        return userMapper.toResponseDTO(saved);
     }
 
     public UserResponseDTO searchByID(Long id) {
@@ -62,13 +59,7 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
 
-        UserResponseDTO response = new UserResponseDTO();
-        response.setId(user.getId());
-        response.setName(user.getName());
-        response.setEmail(user.getEmail());
-        response.setCreatedAt(user.getCreatedAt());
-
-        return response;
+        return userMapper.toResponseDTO(user);
     }
 
     @Transactional
@@ -93,12 +84,6 @@ public class UserService {
             user.setEmail(dto.getEmail());
         }
 
-        UserResponseDTO response = new UserResponseDTO();
-        response.setId(user.getId());
-        response.setName(user.getName());
-        response.setEmail(user.getEmail());
-        response.setCreatedAt(user.getCreatedAt());
-
-        return response;
+        return userMapper.toResponseDTO(user);
     }
 }

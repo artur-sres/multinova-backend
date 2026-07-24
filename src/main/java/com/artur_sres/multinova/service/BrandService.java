@@ -5,6 +5,7 @@ import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.dto.brand.BrandRequestDTO;
 import com.artur_sres.multinova.dto.brand.BrandResponseDTO;
 import com.artur_sres.multinova.exception.*;
+import com.artur_sres.multinova.mapper.BrandMapper;
 import com.artur_sres.multinova.repository.BrandRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
@@ -20,19 +21,13 @@ public class BrandService {
     private final BrandRepository brandRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final ProductRepository productRepository;
+    private final BrandMapper brandMapper;
 
-    public BrandService(BrandRepository brandRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductRepository productRepository) {
+    public BrandService(BrandRepository brandRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductRepository productRepository, BrandMapper brandMapper) {
         this.brandRepository = brandRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.productRepository =productRepository;
-    }
-
-    private BrandResponseDTO toResponseDTO(Brand brand) {
-        BrandResponseDTO dto = new BrandResponseDTO();
-        dto.setId(brand.getId());
-        dto.setName(brand.getName());
-        dto.setUserId(brand.getUser().getId());
-        return dto;
+        this.brandMapper = brandMapper;
     }
 
     private Brand getAuthorizedBrand(Long id, Long userId) {
@@ -43,7 +38,7 @@ public class BrandService {
     public BrandResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Brand brand = getAuthorizedBrand(id, currentUser.getId());
-        return toResponseDTO(brand);
+        return brandMapper.toResponseDTO(brand);
     }
 
     @Transactional
@@ -59,7 +54,7 @@ public class BrandService {
         brand.setUser(currentUser);
 
         brandRepository.save(brand);
-        return toResponseDTO(brand);
+        return brandMapper.toResponseDTO(brand);
     }
 
     @Transactional
@@ -78,7 +73,7 @@ public class BrandService {
 
         brand.setName(dto.getName());
 
-        return toResponseDTO(brand);
+        return brandMapper.toResponseDTO(brand);
     }
 
     @Transactional
@@ -103,7 +98,7 @@ public class BrandService {
         List<Brand> brands = brandRepository.findByUserId(currentUser.getId());
 
         return brands.stream()
-                .map(this::toResponseDTO)
+                .map(brandMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 }

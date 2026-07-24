@@ -11,6 +11,7 @@ import com.artur_sres.multinova.exception.BrandCodeAlreadyExistsException;
 import com.artur_sres.multinova.exception.BrandNotFoundException;
 import com.artur_sres.multinova.exception.CategoryNotFoundException;
 import com.artur_sres.multinova.exception.ProductNotFoundException;
+import com.artur_sres.multinova.mapper.ProductMapper;
 import com.artur_sres.multinova.repository.BrandRepository;
 import com.artur_sres.multinova.repository.CategoryRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
@@ -28,39 +29,14 @@ public class ProductService {
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ProductMapper productMapper;
 
-    public ProductService(ProductRepository productRepository, BrandRepository brandRepository, CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider) {
+    public ProductService(ProductRepository productRepository, BrandRepository brandRepository, CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductMapper productMapper) {
         this.productRepository = productRepository;
         this.brandRepository = brandRepository;
         this.categoryRepository = categoryRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
-    }
-
-    private ProductResponseDTO toResponseDTO(Product product) {
-        ProductResponseDTO dto = new ProductResponseDTO();
-
-        dto.setId(product.getId());
-        dto.setUserId(product.getUser().getId());
-
-        if (product.getBrand() != null) {
-            dto.setBrandId(product.getBrand().getId());
-            dto.setBrandName(product.getBrand().getName());
-        }
-
-        if (product.getCategory() != null) {
-            dto.setCategoryId(product.getCategory().getId());
-            dto.setCategoryName(product.getCategory().getName());
-        }
-
-        dto.setBrandCode(product.getBrandCode());
-        dto.setName(product.getName());
-        dto.setDescription(product.getDescription());
-        dto.setImageUrl(product.getImageUrl());
-        dto.setStock(product.getStock());
-        dto.setCreatedAt(product.getCreatedAt());
-        dto.setUpdatedAt(product.getUpdatedAt());
-
-        return dto;
+        this.productMapper = productMapper;
     }
 
     private void validateBrandCode(Brand brand, String brandCode, Long productId) {
@@ -135,14 +111,14 @@ public class ProductService {
 
         Product saved = productRepository.save(product);
 
-        return toResponseDTO(saved);
+        return productMapper.toResponseDTO(saved);
     }
 
     public ProductResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Product product = getAuthorizedProduct(id, currentUser);
 
-        return toResponseDTO(product);
+        return productMapper.toResponseDTO(product);
     }
 
     public List<ProductResponseDTO> listAll() {
@@ -151,7 +127,7 @@ public class ProductService {
         List<Product> products = productRepository.findAllWithBrandAndCategoryByUserId(currentUser.getId());
 
         return products.stream()
-                .map(this::toResponseDTO)
+                .map(productMapper::toResponseDTO)
                 .toList();
     }
 
@@ -192,7 +168,7 @@ public class ProductService {
         }
 
 
-        return toResponseDTO(product);
+        return productMapper.toResponseDTO(product);
     }
 
     @Transactional

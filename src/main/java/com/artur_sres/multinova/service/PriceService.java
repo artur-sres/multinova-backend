@@ -9,6 +9,7 @@ import com.artur_sres.multinova.exception.AccessDeniedException;
 import com.artur_sres.multinova.exception.PriceNotFoundException;
 import com.artur_sres.multinova.exception.ProductNotFoundException;
 import com.artur_sres.multinova.exception.SellPriceLowerThanBuyPriceException;
+import com.artur_sres.multinova.mapper.PriceMapper;
 import com.artur_sres.multinova.repository.PriceRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
@@ -23,21 +24,13 @@ public class PriceService {
     private final PriceRepository priceRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final ProductRepository productRepository;
+    private final PriceMapper priceMapper;
 
-    public PriceService(PriceRepository priceRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductRepository productRepository) {
+    public PriceService(PriceRepository priceRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductRepository productRepository, PriceMapper priceMapper) {
         this.priceRepository = priceRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.productRepository = productRepository;
-    }
-
-    private PriceResponseDTO toResponseDTO(Price price) {
-        PriceResponseDTO dto = new PriceResponseDTO();
-        dto.setId(price.getId());
-        dto.setProductId(price.getProduct().getId());
-        dto.setPurchasePrice(price.getPurchasePrice());
-        dto.setSalePrice(price.getSalePrice());
-        dto.setCreatedAt(price.getCreatedAt());
-        return dto;
+        this.priceMapper = priceMapper;
     }
 
     private Product getAuthorizedProduct(Long productId) {
@@ -67,7 +60,7 @@ public class PriceService {
         price.setSalePrice(dto.getSalePrice());
 
         Price saved = priceRepository.save(price);
-        return toResponseDTO(saved);
+        return priceMapper.toResponseDTO(saved);
     }
 
     public List<PriceResponseDTO> listByProduct(Long productId) {
@@ -76,7 +69,7 @@ public class PriceService {
         List<Price> prices = priceRepository.findByProductIdOrderByCreatedAtDesc(product.getId());
 
         return prices.stream()
-                .map(this::toResponseDTO)
+                .map(priceMapper::toResponseDTO)
                 .toList();
     }
 
@@ -86,6 +79,6 @@ public class PriceService {
         Price price = priceRepository.findFirstByProductIdOrderByCreatedAtDesc(product.getId())
                 .orElseThrow(() -> new PriceNotFoundException("Price not found."));
 
-        return toResponseDTO(price);
+        return priceMapper.toResponseDTO(price);
     }
 }

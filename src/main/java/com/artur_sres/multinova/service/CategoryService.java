@@ -5,6 +5,7 @@ import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.dto.category.CategoryRequestDTO;
 import com.artur_sres.multinova.dto.category.CategoryResponseDTO;
 import com.artur_sres.multinova.exception.*;
+import com.artur_sres.multinova.mapper.CategoryMapper;
 import com.artur_sres.multinova.repository.CategoryRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
@@ -20,19 +21,13 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final ProductRepository productRepository;
+    private final CategoryMapper categoryMapper;
 
-    public CategoryService(CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductRepository productRepository) {
+    public CategoryService(CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductRepository productRepository, CategoryMapper categoryMapper) {
         this.categoryRepository = categoryRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.productRepository =productRepository;
-    }
-
-    private CategoryResponseDTO toResponseDTO(Category category) {
-        CategoryResponseDTO dto = new CategoryResponseDTO();
-        dto.setId(category.getId());
-        dto.setName(category.getName());
-        dto.setUserId(category.getUser().getId());
-        return dto;
+        this.categoryMapper = categoryMapper;
     }
 
     private Category getAuthorizedCategory(Long id, Long userId) {
@@ -49,7 +44,7 @@ public class CategoryService {
             throw new AccessDeniedException("You do not have permission to access this resource.");
         }
 
-        return toResponseDTO(category);
+        return categoryMapper.toResponseDTO(category);
     }
 
     @Transactional
@@ -65,7 +60,7 @@ public class CategoryService {
         category.setUser(currentUser);
 
         categoryRepository.save(category);
-        return toResponseDTO(category);
+        return categoryMapper.toResponseDTO(category);
     }
 
     @Transactional
@@ -85,7 +80,7 @@ public class CategoryService {
         category.setName(dto.getName());
 
         categoryRepository.save(category);
-        return toResponseDTO(category);
+        return categoryMapper.toResponseDTO(category);
     }
 
     @Transactional
@@ -110,7 +105,7 @@ public class CategoryService {
         List<Category> categories = categoryRepository.findByUserId(currentUser.getId());
 
         return categories.stream()
-                .map(this::toResponseDTO)
+                .map(categoryMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 }
