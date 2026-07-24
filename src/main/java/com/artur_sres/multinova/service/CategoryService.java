@@ -4,10 +4,7 @@ import com.artur_sres.multinova.domain.Category;
 import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.dto.category.CategoryRequestDTO;
 import com.artur_sres.multinova.dto.category.CategoryResponseDTO;
-import com.artur_sres.multinova.exception.AccessDeniedException;
-import com.artur_sres.multinova.exception.CategoryAlreadyExistsException;
-import com.artur_sres.multinova.exception.CategoryInUseException;
-import com.artur_sres.multinova.exception.CategoryNotFoundException;
+import com.artur_sres.multinova.exception.*;
 import com.artur_sres.multinova.repository.CategoryRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
@@ -38,11 +35,15 @@ public class CategoryService {
         return dto;
     }
 
+    private Category getAuthorizedCategory(Long id, Long userId) {
+        return categoryRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new CategoryNotFoundException("Category not found."));
+    }
+
     public CategoryResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("category not found."));
+        Category category = getAuthorizedCategory(id, currentUser.getId());
 
         if (!currentUser.getId().equals(category.getUser().getId())) {
             throw new AccessDeniedException("You do not have permission to access this resource.");
@@ -71,8 +72,7 @@ public class CategoryService {
     public CategoryResponseDTO update(Long id, CategoryRequestDTO dto) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("category not found."));
+        Category category = getAuthorizedCategory(id, currentUser.getId());
 
         if (!currentUser.getId().equals(category.getUser().getId())) {
             throw new AccessDeniedException("You do not have permission to access this resource.");
@@ -92,8 +92,7 @@ public class CategoryService {
     public void delete(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new CategoryNotFoundException("category not found."));
+        Category category = getAuthorizedCategory(id, currentUser.getId());
 
         if (!currentUser.getId().equals(category.getUser().getId())) {
             throw new AccessDeniedException("You do not have permission to access this resource.");

@@ -35,16 +35,14 @@ public class BrandService {
         return dto;
     }
 
+    private Brand getAuthorizedBrand(Long id, Long userId) {
+        return brandRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new BrandNotFoundException("Brand not found."));
+    }
+
     public BrandResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
-
-        Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new BrandNotFoundException("Brand not found."));
-
-        if (!currentUser.getId().equals(brand.getUser().getId())) {
-            throw new AccessDeniedException("You do not have permission to access this resource.");
-        }
-
+        Brand brand = getAuthorizedBrand(id, currentUser.getId());
         return toResponseDTO(brand);
     }
 
@@ -68,8 +66,7 @@ public class BrandService {
     public BrandResponseDTO update(Long id, BrandRequestDTO dto) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
-        Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new BrandNotFoundException("Brand not found."));
+        Brand brand = getAuthorizedBrand(id, currentUser.getId());
 
         if (!currentUser.getId().equals(brand.getUser().getId())) {
             throw new AccessDeniedException("You do not have permission to access this resource.");
@@ -88,8 +85,7 @@ public class BrandService {
     public void delete(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
-        Brand brand = brandRepository.findById(id)
-                .orElseThrow(() -> new BrandNotFoundException("Brand not found."));
+        Brand brand = getAuthorizedBrand(id, currentUser.getId());
 
         if (!currentUser.getId().equals(brand.getUser().getId())) {
             throw new AccessDeniedException("You do not have permission to access this resource.");
