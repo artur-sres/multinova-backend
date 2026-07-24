@@ -108,7 +108,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException exception) {
-        ErrorResponse err = new ErrorResponse("Required request body is missing or malformed.", HttpStatus.BAD_REQUEST.value());
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.BAD_REQUEST.value());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+    }
+
+    @ExceptionHandler(InvalidBrandCodeAssignmentException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidBrandCodeAssignment(InvalidBrandCodeAssignmentException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
     }
 }

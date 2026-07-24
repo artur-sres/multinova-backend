@@ -7,10 +7,7 @@ import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.dto.product.ProductRequestDTO;
 import com.artur_sres.multinova.dto.product.ProductResponseDTO;
 import com.artur_sres.multinova.dto.product.ProductPatchDTO;
-import com.artur_sres.multinova.exception.BrandCodeAlreadyExistsException;
-import com.artur_sres.multinova.exception.BrandNotFoundException;
-import com.artur_sres.multinova.exception.CategoryNotFoundException;
-import com.artur_sres.multinova.exception.ProductNotFoundException;
+import com.artur_sres.multinova.exception.*;
 import com.artur_sres.multinova.mapper.ProductMapper;
 import com.artur_sres.multinova.repository.BrandRepository;
 import com.artur_sres.multinova.repository.CategoryRepository;
@@ -42,7 +39,7 @@ public class ProductService {
     private void validateBrandCode(Brand brand, String brandCode, Long productId) {
         if (brand == null) {
             if (brandCode != null && !brandCode.isBlank()) {
-                throw new IllegalArgumentException("A brand code can only be assigned when a brand is selected.");
+                throw new InvalidBrandCodeAssignmentException("A brand code can only be assigned when a brand is selected.");
             }
             return;
         }
@@ -136,19 +133,23 @@ public class ProductService {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Product product = getAuthorizedProduct(id, currentUser);
 
-        if (dto.getBrandId() != null) {
-            Brand brand = getAuthorizedBrand(dto.getBrandId(), currentUser);
-            product.setBrand(brand);
+        Brand targetBrand = dto.getBrandId() != null
+                ? getAuthorizedBrand(dto.getBrandId(), currentUser)
+                : product.getBrand();
+
+        String targetBrandCode = dto.getBrandCode() != null
+                ? dto.getBrandCode()
+                : product.getBrandCode();
+
+        if (dto.getBrandId() != null || dto.getBrandCode() != null) {
+            validateBrandCode(targetBrand, targetBrandCode, product.getId());
+            product.setBrand(targetBrand);
+            product.setBrandCode(targetBrandCode);
         }
 
         if (dto.getCategoryId() != null) {
             Category category = getAuthorizedCategory(dto.getCategoryId(), currentUser);
             product.setCategory(category);
-        }
-
-        if (dto.getBrandCode() != null) {
-            validateBrandCode(product.getBrand(), dto.getBrandCode(), product.getId());
-            product.setBrandCode(dto.getBrandCode());
         }
 
         if (dto.getName() != null && !dto.getName().isBlank()) {
@@ -166,7 +167,6 @@ public class ProductService {
         if (dto.getStock() != null) {
             product.setStock(dto.getStock());
         }
-
 
         return productMapper.toResponseDTO(product);
     }
