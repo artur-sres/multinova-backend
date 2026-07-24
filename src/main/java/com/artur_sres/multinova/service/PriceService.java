@@ -55,7 +55,7 @@ public class PriceService {
         if (dto.getSalePrice().compareTo(dto.getPurchasePrice()) < 0) {
             throw new SellPriceLowerThanBuyPriceException("Sale price cannot be lower than purchase price.");
         }
-        
+
         Product product = getAuthorizedProduct(productId);
 
         Price price = new Price();

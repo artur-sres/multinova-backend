@@ -65,14 +65,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CategoryNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleCategoryNotFound(CategoryNotFoundException exception) {
-        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
     }
 
     @ExceptionHandler(CategoryAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleCategoryAlreadyExists(CategoryAlreadyExistsException exception) {
-        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
     }
 
     @ExceptionHandler(CategoryInUseException.class)
@@ -94,8 +94,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(SellPriceLowerThanBuyPriceException.class)
-    public ResponseEntity<ErrorResponse> sellPriceLowerThanBuyPrice(SellPriceLowerThanBuyPriceException exception) {
+    public ResponseEntity<ErrorResponse> handleSellPriceLowerThanBuyPrice(SellPriceLowerThanBuyPriceException exception) {
         ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
     }
+
+    @ExceptionHandler(BrandCodeAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleBrandCodeAlreadyExists(BrandCodeAlreadyExistsException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+    }
+
 }

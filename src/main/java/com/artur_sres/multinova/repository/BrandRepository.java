@@ -10,4 +10,5 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     boolean existsByNameAndUserId(String name, Long userId);
     boolean existsByNameAndUserIdAndIdNot(String name, Long userId, Long id);
     List<Brand> findByUserId(Long userId);
+    Optional<Brand> findByIdAndUserId(Long id, Long userId);
 }
