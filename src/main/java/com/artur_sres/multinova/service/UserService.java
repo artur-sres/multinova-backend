@@ -11,8 +11,10 @@ import com.artur_sres.multinova.repository.UserRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -28,6 +30,7 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    @Transactional
     public UserResponseDTO create(UserCreateDTO dto){
         if (existsByEmail(dto.getEmail())) {
             throw new EmailAlreadyRegisteredException("A user with this email address already exists.");
@@ -68,6 +71,7 @@ public class UserService {
         return response;
     }
 
+    @Transactional
     public UserResponseDTO update(Long id, UserPatchDTO dto) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -88,8 +92,6 @@ public class UserService {
             }
             user.setEmail(dto.getEmail());
         }
-
-        userRepository.save(user);
 
         UserResponseDTO response = new UserResponseDTO();
         response.setId(user.getId());

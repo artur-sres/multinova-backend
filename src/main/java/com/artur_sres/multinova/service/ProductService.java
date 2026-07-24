@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final BrandRepository brandRepository;
@@ -137,7 +138,6 @@ public class ProductService {
         return toResponseDTO(saved);
     }
 
-    @Transactional(readOnly = true)
     public ProductResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Product product = getAuthorizedProduct(id, currentUser);
@@ -145,7 +145,6 @@ public class ProductService {
         return toResponseDTO(product);
     }
 
-    @Transactional(readOnly = true)
     public List<ProductResponseDTO> listAll() {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 

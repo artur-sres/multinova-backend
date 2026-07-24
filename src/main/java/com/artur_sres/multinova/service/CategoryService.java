@@ -12,11 +12,13 @@ import com.artur_sres.multinova.repository.CategoryRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
@@ -49,6 +51,7 @@ public class CategoryService {
         return toResponseDTO(category);
     }
 
+    @Transactional
     public CategoryResponseDTO create(CategoryRequestDTO dto){
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -64,6 +67,7 @@ public class CategoryService {
         return toResponseDTO(category);
     }
 
+    @Transactional
     public CategoryResponseDTO update(Long id, CategoryRequestDTO dto) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -84,6 +88,7 @@ public class CategoryService {
         return toResponseDTO(category);
     }
 
+    @Transactional
     public void delete(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 

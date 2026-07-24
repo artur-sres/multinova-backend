@@ -13,10 +13,12 @@ import com.artur_sres.multinova.repository.PriceRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class PriceService {
     private final PriceRepository priceRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
@@ -51,6 +53,7 @@ public class PriceService {
         return product;
     }
 
+    @Transactional
     public PriceResponseDTO create(Long productId, PriceRequestDTO dto) {
         if (dto.getSalePrice().compareTo(dto.getPurchasePrice()) < 0) {
             throw new SellPriceLowerThanBuyPriceException("Sale price cannot be lower than purchase price.");

@@ -9,11 +9,13 @@ import com.artur_sres.multinova.repository.BrandRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class BrandService {
     private final BrandRepository brandRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
@@ -46,6 +48,7 @@ public class BrandService {
         return toResponseDTO(brand);
     }
 
+    @Transactional
     public BrandResponseDTO create(BrandRequestDTO dto){
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -61,6 +64,7 @@ public class BrandService {
         return toResponseDTO(brand);
     }
 
+    @Transactional
     public BrandResponseDTO update(Long id, BrandRequestDTO dto) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -77,10 +81,10 @@ public class BrandService {
 
         brand.setName(dto.getName());
 
-        brandRepository.save(brand);
         return toResponseDTO(brand);
     }
 
+    @Transactional
     public void delete(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
