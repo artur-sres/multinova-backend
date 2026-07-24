@@ -4,10 +4,8 @@ import com.artur_sres.multinova.dto.product.ProductPatchDTO;
 import com.artur_sres.multinova.dto.product.ProductRequestDTO;
 import com.artur_sres.multinova.dto.product.ProductResponseDTO;
 import com.artur_sres.multinova.service.ProductService;
-import com.artur_sres.multinova.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

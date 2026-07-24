@@ -33,6 +33,10 @@ public class JwtService {
                 .compact();
     }
 
+    public Long extractId(String token) {
+        return getClaims(token).get("id", Long.class);
+    }
+
     public String extractEmail(String token) {
         return getClaims(token).getSubject();
     }
