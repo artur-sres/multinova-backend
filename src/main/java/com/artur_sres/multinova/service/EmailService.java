@@ -19,4 +19,12 @@ public class EmailService {
         message.setText("Your verification code is " + code + ". It expires in 10 minutes.");
         mailSender.send(message);
     }
+
+    public void sendPasswordResetCode(String email, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("Reset your Multinova password");
+        message.setText("Your password reset code is " + code + ". It expires in 15 minutes.");
+        mailSender.send(message);
+    }
 }

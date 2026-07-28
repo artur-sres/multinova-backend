@@ -26,13 +26,15 @@ public class AuthService {
     private final UserVerificationCodeRepository userVerificationCodeRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
     public AuthService(UserRepository userRepository, UserVerificationCodeRepository userVerificationCodeRepository,
-                       PasswordEncoder passwordEncoder, JwtService jwtService) {
+                       PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService) {
         this.userRepository = userRepository;
         this.userVerificationCodeRepository = userVerificationCodeRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.emailService = emailService;
     }
 
     public LoginResponseDTO login(LoginRequestDTO dto) {
@@ -89,7 +91,7 @@ public class AuthService {
         verificationCode.setPurpose("PASSWORD_RESET");
         userVerificationCodeRepository.save(verificationCode);
 
-        // emailService.sendPasswordResetCode(user.getEmail(), plainTextCode);
+        emailService.sendPasswordResetCode(user.getEmail(), plainTextCode);
     }
 
     @Transactional(noRollbackFor = InvalidCredentialsException.class)
