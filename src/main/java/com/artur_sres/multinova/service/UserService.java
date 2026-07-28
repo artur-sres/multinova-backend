@@ -57,12 +57,14 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
         User saved = userRepository.save(user);
-        userVerificationCodeRepository.findByUserId(saved.getId()).ifPresent(userVerificationCodeRepository::delete);
+        userVerificationCodeRepository.findByUserIdAndPurpose(saved.getId(), "ACCOUNT_VERIFICATION")
+                .ifPresent(userVerificationCodeRepository::delete);
 
         String plainCode = generateVerificationCode();
         UserVerificationCode verificationCode = new UserVerificationCode();
         verificationCode.setUser(saved);
         verificationCode.setCode(passwordEncoder.encode(plainCode));
+        verificationCode.setPurpose("ACCOUNT_VERIFICATION");
         verificationCode.setExpiresAt(LocalDateTime.now().plusMinutes(10));
         userVerificationCodeRepository.save(verificationCode);
 

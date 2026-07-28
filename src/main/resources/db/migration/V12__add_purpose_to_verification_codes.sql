@@ -1,0 +1,2 @@
+ALTER TABLE user_verification_codes
+    ADD COLUMN purpose VARCHAR(30) NOT NULL DEFAULT 'ACCOUNT_VERIFICATION';
