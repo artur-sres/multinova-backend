@@ -12,11 +12,11 @@ import com.artur_sres.multinova.exception.InvalidVerificationCodeException;
 import com.artur_sres.multinova.exception.UserNotVerifiedException;
 import com.artur_sres.multinova.repository.UserRepository;
 import com.artur_sres.multinova.repository.UserVerificationCodeRepository;
+import com.artur_sres.multinova.util.VerificationCodeGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
@@ -27,14 +27,16 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
+    private final VerificationCodeGenerator verificationCodeGenerator;
 
     public AuthService(UserRepository userRepository, UserVerificationCodeRepository userVerificationCodeRepository,
-                       PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService) {
+                       PasswordEncoder passwordEncoder, JwtService jwtService, EmailService emailService, VerificationCodeGenerator verificationCodeGenerator) {
         this.userRepository = userRepository;
         this.userVerificationCodeRepository = userVerificationCodeRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.emailService = emailService;
+        this.verificationCodeGenerator = verificationCodeGenerator;
     }
 
     public LoginResponseDTO login(LoginRequestDTO dto) {
@@ -83,7 +85,7 @@ public class AuthService {
         userVerificationCodeRepository.findByUserIdAndPurpose(user.getId(), "PASSWORD_RESET")
                 .ifPresent(userVerificationCodeRepository::delete);
 
-        String plainTextCode = generatePasswordResetCode();
+        String plainTextCode = verificationCodeGenerator.generate();
         UserVerificationCode verificationCode = new UserVerificationCode();
         verificationCode.setUser(user);
         verificationCode.setCode(passwordEncoder.encode(plainTextCode));
@@ -115,14 +117,5 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
         userVerificationCodeRepository.delete(verificationCode);
-    }
-
-    private String generatePasswordResetCode() {
-        SecureRandom random = new SecureRandom();
-        StringBuilder code = new StringBuilder(5);
-        for (int index = 0; index < 5; index++) {
-            code.append(random.nextInt(10));
-        }
-        return code.toString();
     }
 }

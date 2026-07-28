@@ -12,11 +12,11 @@ import com.artur_sres.multinova.mapper.UserMapper;
 import com.artur_sres.multinova.repository.UserRepository;
 import com.artur_sres.multinova.repository.UserVerificationCodeRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
+import com.artur_sres.multinova.util.VerificationCodeGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
@@ -28,16 +28,18 @@ public class UserService {
     private final EmailService emailService;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final UserMapper userMapper;
+    private final VerificationCodeGenerator verificationCodeGenerator;
 
     public UserService(UserRepository userRepository, UserVerificationCodeRepository userVerificationCodeRepository,
                        PasswordEncoder passwordEncoder, EmailService emailService,
-                       AuthenticatedUserProvider authenticatedUserProvider, UserMapper userMapper) {
+                       AuthenticatedUserProvider authenticatedUserProvider, UserMapper userMapper, VerificationCodeGenerator verificationCodeGenerator) {
         this.userRepository = userRepository;
         this.userVerificationCodeRepository = userVerificationCodeRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.userMapper = userMapper;
+        this.verificationCodeGenerator = verificationCodeGenerator;
     }
 
     public boolean existsByEmail(String email) {
@@ -60,7 +62,7 @@ public class UserService {
         userVerificationCodeRepository.findByUserIdAndPurpose(saved.getId(), "ACCOUNT_VERIFICATION")
                 .ifPresent(userVerificationCodeRepository::delete);
 
-        String plainCode = generateVerificationCode();
+        String plainCode = verificationCodeGenerator.generate();
         UserVerificationCode verificationCode = new UserVerificationCode();
         verificationCode.setUser(saved);
         verificationCode.setCode(passwordEncoder.encode(plainCode));
@@ -71,16 +73,6 @@ public class UserService {
         emailService.sendVerificationCode(saved.getEmail(), plainCode);
 
         return userMapper.toResponseDTO(saved);
-    }
-
-    private String generateVerificationCode() {
-        final String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        SecureRandom random = new SecureRandom();
-        StringBuilder code = new StringBuilder(5);
-        for (int index = 0; index < 5; index++) {
-            code.append(characters.charAt(random.nextInt(characters.length())));
-        }
-        return code.toString();
     }
 
     public UserResponseDTO searchByID(Long id) {
