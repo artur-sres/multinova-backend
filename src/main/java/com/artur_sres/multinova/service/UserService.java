@@ -2,7 +2,7 @@ package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.domain.UserVerificationCode;
-import com.artur_sres.multinova.dto.user.UserCreateDTO;
+import com.artur_sres.multinova.dto.user.UserRequestDTO;
 import com.artur_sres.multinova.dto.user.UserPatchDTO;
 import com.artur_sres.multinova.dto.user.UserResponseDTO;
 import com.artur_sres.multinova.exception.AccessDeniedException;
@@ -47,7 +47,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseDTO create(UserCreateDTO dto){
+    public UserResponseDTO create(UserRequestDTO dto){
         User user = userRepository.findByEmail(dto.getEmail()).orElseGet(User::new);
 
         if (user.getId() != null && Boolean.TRUE.equals(user.getIsVerified())) {

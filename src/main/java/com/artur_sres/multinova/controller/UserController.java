@@ -1,6 +1,6 @@
 package com.artur_sres.multinova.controller;
 
-import com.artur_sres.multinova.dto.user.UserCreateDTO;
+import com.artur_sres.multinova.dto.user.UserRequestDTO;
 import com.artur_sres.multinova.dto.user.UserPatchDTO;
 import com.artur_sres.multinova.dto.user.UserResponseDTO;
 import com.artur_sres.multinova.service.UserService;
@@ -19,7 +19,7 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserCreateDTO dto){
+    public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO dto){
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(dto));
     }
 
