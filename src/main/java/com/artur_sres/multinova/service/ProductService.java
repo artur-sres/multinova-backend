@@ -152,21 +152,10 @@ public class ProductService {
             product.setCategory(category);
         }
 
-        if (dto.getName() != null && !dto.getName().isBlank()) {
-            product.setName(dto.getName());
-        }
-
-        if (dto.getDescription() != null) {
-            product.setDescription(dto.getDescription());
-        }
-
-        if (dto.getImageUrl() != null) {
-            product.setImageUrl(dto.getImageUrl());
-        }
-
-        if (dto.getStock() != null) {
-            product.setStock(dto.getStock());
-        }
+        if (dto.getName() != null && !dto.getName().isBlank()) {product.setName(dto.getName());}
+        if (dto.getDescription() != null) {product.setDescription(dto.getDescription());}
+        if (dto.getImageUrl() != null) {product.setImageUrl(dto.getImageUrl());}
+        if (dto.getStock() != null) {product.setStock(dto.getStock());}
 
         return productMapper.toResponseDTO(product);
     }
