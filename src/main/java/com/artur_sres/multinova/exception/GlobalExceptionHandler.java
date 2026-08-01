@@ -141,4 +141,10 @@ public class GlobalExceptionHandler {
         ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
     }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientStock(InsufficientStockException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
 }

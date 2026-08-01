@@ -5,7 +5,7 @@ import com.artur_sres.multinova.dto.sale.SaleResponseDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = SaleItemMapper.class)
 public interface SaleMapper {
 
     @Mapping(source = "customer.id", target = "customerId")

@@ -80,10 +80,8 @@ public class ProductService {
     }
 
     private Product getAuthorizedProduct(Long productId, User currentUser) {
-        Product product = productRepository.findByIdAndUserIdAndDeletedAtIsNull(productId, currentUser.getId())
+        return productRepository.findByIdAndUserIdAndDeletedAtIsNull(productId, currentUser.getId())
                 .orElseThrow(() -> new ProductNotFoundException("Product not found."));
-
-        return product;
     }
 
     @Transactional

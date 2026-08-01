@@ -24,7 +24,7 @@ public class Sale {
     private Customer customer;
 
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalAmount;
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(name = "sale_date", nullable = false)
     private LocalDateTime saleDate;
@@ -61,6 +61,11 @@ public class Sale {
 
     public BigDecimal getTotalAmount() {return totalAmount;}
     public void setTotalAmount(BigDecimal totalAmount) {this.totalAmount = totalAmount;}
+    public void addToTotalAmount(BigDecimal amount) {
+        if (amount != null) {
+            this.totalAmount = this.totalAmount.add(amount);
+        }
+    }
 
     public LocalDateTime getSaleDate() {return saleDate;}
     public void setSaleDate(LocalDateTime saleDate) {this.saleDate = saleDate;}
@@ -73,4 +78,5 @@ public class Sale {
 
     public List<SaleItem> getItems() {return items;}
     public void setItems(List<SaleItem> items) {this.items = items;}
+    public void addItem(SaleItem saleItem) {this.items.add(saleItem);}
 }

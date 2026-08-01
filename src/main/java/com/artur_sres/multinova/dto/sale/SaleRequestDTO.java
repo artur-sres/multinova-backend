@@ -16,5 +16,9 @@ public class SaleRequestDTO {
     @Valid
     private List<SaleItemRequestDTO> items;
 
+    public Long getCustomerId() {return customerId;}
+    public void setCustomerId(Long customerId) {this.customerId = customerId;}
 
+    public List<SaleItemRequestDTO> getItems() {return items;}
+    public void setItems(List<SaleItemRequestDTO> items) {this.items = items;}
 }
