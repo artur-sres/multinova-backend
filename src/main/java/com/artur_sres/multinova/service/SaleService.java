@@ -1,12 +1,14 @@
 package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.domain.*;
+import com.artur_sres.multinova.domain.enums.SaleStatus;
 import com.artur_sres.multinova.dto.sale.SaleRequestDTO;
 import com.artur_sres.multinova.dto.sale.SaleResponseDTO;
 import com.artur_sres.multinova.dto.sale_item.SaleItemRequestDTO;
 import com.artur_sres.multinova.exception.CustomerNotFoundException;
 import com.artur_sres.multinova.exception.InsufficientStockException;
 import com.artur_sres.multinova.exception.ProductNotFoundException;
+import com.artur_sres.multinova.exception.SaleNotFoundException;
 import com.artur_sres.multinova.mapper.SaleMapper;
 import com.artur_sres.multinova.repository.CustomerRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
@@ -48,6 +50,11 @@ public class SaleService {
                 .orElseThrow(() -> new ProductNotFoundException("Product not found."));
     }
 
+    private Sale getAuthorizedSale(Long saleId, User currentUser, SaleStatus status) {
+        return saleRepository.findByIdAndUserIdAndStatus(saleId, currentUser.getId(), status)
+                .orElseThrow(() -> new SaleNotFoundException("Sale not found."));
+    }
+
     @Transactional
     public SaleResponseDTO create(SaleRequestDTO dto) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
@@ -83,12 +90,18 @@ public class SaleService {
         return saleMapper.toResponseDTO(saved);
     }
 
-    public SaleResponseDTO update(SaleRequestDTO dto) {
-        return null;
-    }
+    @Transactional
+    public void cancel(Long id) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
 
-    public SaleResponseDTO delete(SaleRequestDTO dto) {
-        return null;
+        Sale sale = getAuthorizedSale(id, currentUser, SaleStatus.COMPLETED);
+
+        for(SaleItem saleItem : sale.getItems()) {
+            Product product = saleItem.getProduct();
+            product.addToStock(saleItem.getQuantity());
+        }
+
+        sale.setStatus(SaleStatus.CANCELLED);
     }
 
 }

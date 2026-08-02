@@ -147,4 +147,10 @@ public class GlobalExceptionHandler {
         ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
     }
+
+    @ExceptionHandler(SaleNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSaleNotFound(SaleNotFoundException exception) {
+        ErrorResponse err = new ErrorResponse((exception.getMessage()), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
 }

@@ -68,7 +68,6 @@ public class Product {
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
@@ -76,7 +75,6 @@ public class Product {
     public User getUser() {
         return user;
     }
-
     public void setUser(User user) {
         this.user = user;
     }
@@ -84,7 +82,6 @@ public class Product {
     public Brand getBrand() {
         return brand;
     }
-
     public void setBrand(Brand brand) {
         this.brand = brand;
     }
@@ -92,7 +89,6 @@ public class Product {
     public Category getCategory() {
         return category;
     }
-
     public void setCategory(Category category) {
         this.category = category;
     }
@@ -100,7 +96,6 @@ public class Product {
     public String getBrandCode() {
         return brandCode;
     }
-
     public void setBrandCode(String brandCode) {
         this.brandCode = brandCode;
     }
@@ -108,7 +103,6 @@ public class Product {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -116,7 +110,6 @@ public class Product {
     public String getDescription() {
         return description;
     }
-
     public void setDescription(String description) {
         this.description = description;
     }
@@ -124,7 +117,6 @@ public class Product {
     public String getImageUrl() {
         return imageUrl;
     }
-
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
@@ -132,15 +124,14 @@ public class Product {
     public int getStock() {
         return stock;
     }
-
     public void setStock(int stock) {
         this.stock = stock;
     }
+    public void addToStock(int quantity) {this.stock += quantity; }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -148,7 +139,6 @@ public class Product {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
-
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
@@ -156,7 +146,6 @@ public class Product {
     public LocalDateTime getDeletedAt() {
         return deletedAt;
     }
-
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
     }

@@ -1,5 +1,6 @@
 package com.artur_sres.multinova.domain;
 
+import com.artur_sres.multinova.domain.enums.SaleStatus;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -34,6 +35,10 @@ public class Sale {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private SaleStatus status = SaleStatus.COMPLETED;
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SaleItem> items = new ArrayList<>();
@@ -79,4 +84,7 @@ public class Sale {
     public List<SaleItem> getItems() {return items;}
     public void setItems(List<SaleItem> items) {this.items = items;}
     public void addItem(SaleItem saleItem) {this.items.add(saleItem);}
+
+    public SaleStatus getStatus() {return status;}
+    public void setStatus(SaleStatus status) {this.status = status;}
 }

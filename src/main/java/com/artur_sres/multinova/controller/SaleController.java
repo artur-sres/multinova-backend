@@ -22,18 +22,9 @@ public class SaleController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saleService.create(dto));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SaleResponseDTO> getSaleById(SaleRequestDTO dto) {
-        return null;
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<SaleResponseDTO> updateSaleById(SaleRequestDTO dto) {
-        return null;
-    }
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<SaleResponseDTO> deleteSaleById(SaleRequestDTO dto) {
-        return null;
+    public ResponseEntity<Void> cancelSaleById(@PathVariable Long id) {
+        saleService.cancel(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
