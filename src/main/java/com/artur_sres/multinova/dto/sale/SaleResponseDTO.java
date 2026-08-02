@@ -1,5 +1,6 @@
 package com.artur_sres.multinova.dto.sale;
 
+import com.artur_sres.multinova.domain.enums.SaleStatus;
 import com.artur_sres.multinova.dto.sale_item.SaleItemResponseDTO;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ public class SaleResponseDTO {
     private BigDecimal totalAmount;
     private LocalDateTime saleDate;
     private List<SaleItemResponseDTO> items;
+    private SaleStatus status;
 
     public Long getId() {return id;}
     public void setId(Long id) {this.id = id;}
@@ -31,4 +33,7 @@ public class SaleResponseDTO {
 
     public List<SaleItemResponseDTO> getItems() {return items;}
     public void setItems(List<SaleItemResponseDTO> items) {this.items = items;}
+
+    public SaleStatus getStatus() {return status;}
+    public void setStatus(SaleStatus status) {this.status = status;}
 }

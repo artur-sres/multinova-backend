@@ -14,10 +14,13 @@ import com.artur_sres.multinova.repository.CustomerRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.repository.SaleRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -104,4 +107,16 @@ public class SaleService {
         sale.setStatus(SaleStatus.CANCELLED);
     }
 
+    public List<SaleResponseDTO> listAll(SaleStatus status) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+
+
+        List<Sale> sales = (status != null)
+                ? saleRepository.findByUserIdAndStatus(currentUser.getId(), status)
+                : saleRepository.findByUserId(currentUser.getId());
+
+        return sales.stream()
+                .map(saleMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
 }

@@ -1,5 +1,7 @@
 package com.artur_sres.multinova.controller;
 
+import com.artur_sres.multinova.domain.Sale;
+import com.artur_sres.multinova.domain.enums.SaleStatus;
 import com.artur_sres.multinova.dto.sale.SaleRequestDTO;
 import com.artur_sres.multinova.dto.sale.SaleResponseDTO;
 import com.artur_sres.multinova.service.SaleService;
@@ -7,6 +9,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/sales")
@@ -26,5 +30,10 @@ public class SaleController {
     public ResponseEntity<Void> cancelSaleById(@PathVariable Long id) {
         saleService.cancel(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<SaleResponseDTO>> listSales(@RequestParam(required = false)SaleStatus status) {
+        return ResponseEntity.status(HttpStatus.OK).body(saleService.listAll(status));
     }
 }
