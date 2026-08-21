@@ -153,4 +153,10 @@ public class GlobalExceptionHandler {
         ErrorResponse err = new ErrorResponse((exception.getMessage()), HttpStatus.NOT_FOUND.value());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
     }
+
+    @ExceptionHandler(BillNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleBillNotFound(BillNotFoundException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.NOT_FOUND.value());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
 }
