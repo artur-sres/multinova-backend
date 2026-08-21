@@ -43,7 +43,7 @@ The application is built with Spring Boot and PostgreSQL. It uses JWT authentica
 - Spring Data JPA / Hibernate
 - PostgreSQL
 - Flyway
-- JJWT
+- JWT
 - MapStruct
 - Maven Wrapper
 
