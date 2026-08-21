@@ -16,12 +16,9 @@ The application is built with Spring Boot and PostgreSQL. It uses JWT authentica
 - [Features](#features)
 - [Tech stack](#tech-stack)
 - [Requirements](#requirements)
-- [Getting started](#getting-started)
-- [Authentication flow](#authentication-flow)
 - [API overview](#api-overview)
 - [Project structure](#project-structure)
-- [Tests](#tests)
-- [Database migrations](#database-migrations)
+
 
 ---
 
