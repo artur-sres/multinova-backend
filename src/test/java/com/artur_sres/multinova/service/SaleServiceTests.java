@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class SaleServiceTests {
     @ParameterizedTest
     @NullSource
-    @ValueSource(strings = {"0.00", "100.00"})
+    @ValueSource(strings = {"0.00", "100.00", "-100.00", "-25.00"})
     void creationAndCancellationUpdateDebtAndRestoreStock(String initialBalance) {
         SaleRepository sales = mock(SaleRepository.class);
         CustomerRepository customers = mock(CustomerRepository.class);
