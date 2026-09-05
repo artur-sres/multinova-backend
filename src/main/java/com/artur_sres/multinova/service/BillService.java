@@ -59,6 +59,13 @@ public class BillService {
         return billMapper.toResponseDTO(bill);
     }
 
+    @Transactional
+    public void delete(Long id) {
+        User currentUser = authenticatedUserProvider.getCurrentUser();
+        Bill bill = getAuthorizedBill(id, currentUser.getId());
+        billRepository.delete(bill);
+    }
+
     public List<BillResponseDTO> listAll(BillStatus status) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         List<Bill> bills = status == null

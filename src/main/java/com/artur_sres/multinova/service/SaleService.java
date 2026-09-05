@@ -14,7 +14,6 @@ import com.artur_sres.multinova.repository.CustomerRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.repository.SaleRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +87,10 @@ public class SaleService {
             sale.addItem(saleItem);
         }
 
+        BigDecimal debtBalance = currentCustomer.getDebtBalance() != null
+                ? currentCustomer.getDebtBalance() : BigDecimal.ZERO;
+        currentCustomer.setDebtBalance(debtBalance.add(sale.getTotalAmount()));
+
         Sale saved = saleRepository.save(sale);
 
         return saleMapper.toResponseDTO(saved);
@@ -103,6 +106,11 @@ public class SaleService {
             Product product = saleItem.getProduct();
             product.addToStock(saleItem.getQuantity());
         }
+
+        Customer customer = sale.getCustomer();
+        BigDecimal debtBalance = customer.getDebtBalance() != null
+                ? customer.getDebtBalance() : BigDecimal.ZERO;
+        customer.setDebtBalance(debtBalance.subtract(sale.getTotalAmount()));
 
         sale.setStatus(SaleStatus.CANCELLED);
     }

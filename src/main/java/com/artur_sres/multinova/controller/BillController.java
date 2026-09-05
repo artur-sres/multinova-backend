@@ -35,6 +35,12 @@ public class BillController {
         return ResponseEntity.ok(billService.markAsPaid(id));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBill(@PathVariable Long id) {
+        billService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping
     public ResponseEntity<List<BillResponseDTO>> listBills(@RequestParam(required = false) BillStatus status) {
         return ResponseEntity.ok(billService.listAll(status));
