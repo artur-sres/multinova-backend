@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,7 +56,10 @@ public class BillService {
     public BillResponseDTO markAsPaid(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Bill bill = getAuthorizedBill(id, currentUser.getId());
-        bill.setStatus(BillStatus.PAID);
+        if (bill.getStatus() != BillStatus.PAID) {
+            bill.setStatus(BillStatus.PAID);
+            bill.setPaidAt(LocalDateTime.now());
+        }
         return billMapper.toResponseDTO(bill);
     }
 

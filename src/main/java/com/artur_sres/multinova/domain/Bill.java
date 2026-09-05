@@ -32,6 +32,9 @@ public class Bill {
     @Column(nullable = false, length = 20)
     private BillStatus status = BillStatus.PENDING;
 
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -66,6 +69,9 @@ public class Bill {
 
     public BillStatus getStatus() {return status;}
     public void setStatus(BillStatus status) {this.status = status;}
+
+    public LocalDateTime getPaidAt() {return paidAt;}
+    public void setPaidAt(LocalDateTime paidAt) {this.paidAt = paidAt;}
 
     public LocalDateTime getCreatedAt() {return createdAt;}
     public void setCreatedAt(LocalDateTime createdAt) {this.createdAt = createdAt;}

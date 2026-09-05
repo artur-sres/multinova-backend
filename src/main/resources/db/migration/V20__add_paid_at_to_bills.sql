@@ -1,0 +1,1 @@
+ALTER TABLE bills ADD COLUMN paid_at TIMESTAMP;
