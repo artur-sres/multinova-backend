@@ -12,6 +12,12 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(DirectStockUpdateException.class)
+    public ResponseEntity<ErrorResponse> handleDirectStockUpdate(DirectStockUpdateException exception) {
+        ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(err);
+    }
+
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
     public ResponseEntity<ErrorResponse> handleBrandCodeDuplicate(EmailAlreadyRegisteredException exception) {
         ErrorResponse err = new ErrorResponse(exception.getMessage(), HttpStatus.CONFLICT.value());

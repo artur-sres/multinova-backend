@@ -8,6 +8,8 @@ import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.dto.product.ProductRequestDTO;
 import com.artur_sres.multinova.dto.product.ProductResponseDTO;
 import com.artur_sres.multinova.dto.product.ProductPatchDTO;
+import com.artur_sres.multinova.dto.stock_purchase.StockPurchaseRequestDTO;
+import com.artur_sres.multinova.dto.stock_purchase_item.StockPurchaseItemRequestDTO;
 import com.artur_sres.multinova.exception.*;
 import com.artur_sres.multinova.mapper.ProductMapper;
 import com.artur_sres.multinova.repository.BrandRepository;
@@ -30,14 +32,16 @@ public class ProductService {
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final ProductMapper productMapper;
     private final PriceRepository priceRepository;
+    private final StockPurchaseService stockPurchaseService;
 
-    public ProductService(ProductRepository productRepository, BrandRepository brandRepository, CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductMapper productMapper, PriceRepository priceRepository) {
+    public ProductService(ProductRepository productRepository, BrandRepository brandRepository, CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductMapper productMapper, PriceRepository priceRepository, StockPurchaseService stockPurchaseService) {
         this.productRepository = productRepository;
         this.brandRepository = brandRepository;
         this.categoryRepository = categoryRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.productMapper = productMapper;
         this.priceRepository = priceRepository;
+        this.stockPurchaseService = stockPurchaseService;
     }
 
     private void validateBrandCode(Brand brand, String brandCode, Long productId) {
@@ -119,7 +123,7 @@ public class ProductService {
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
         product.setImageUrl(dto.getImageUrl());
-        product.setStock(dto.getStock());
+        product.setStock(0);
 
         Product saved = productRepository.save(product);
 
@@ -128,6 +132,18 @@ public class ProductService {
         price.setPurchasePrice(dto.getPrice().getPurchasePrice());
         price.setSalePrice(dto.getPrice().getSalePrice());
         priceRepository.save(price);
+
+        if (dto.getStock() > 0) {
+            StockPurchaseItemRequestDTO item = new StockPurchaseItemRequestDTO();
+            item.setProductId(saved.getId());
+            item.setQuantity(dto.getStock());
+            item.setUnitCost(dto.getPrice().getPurchasePrice());
+
+            StockPurchaseRequestDTO purchase = new StockPurchaseRequestDTO();
+            purchase.setItems(List.of(item));
+            // Joins this transaction: product, price and initial purchase succeed together.
+            stockPurchaseService.create(purchase);
+        }
 
         return toResponseDTO(saved);
     }
@@ -154,6 +170,10 @@ public class ProductService {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Product product = getAuthorizedProduct(id, currentUser);
 
+        if (dto.getStock() != null && dto.getStock() != product.getStock()) {
+            throw new DirectStockUpdateException("Para alterar o estoque, registre uma compra ou uma venda. O saldo não pode ser alterado diretamente.");
+        }
+
         Brand targetBrand = dto.getBrandId() != null
                 ? getAuthorizedBrand(dto.getBrandId(), currentUser)
                 : product.getBrand();
@@ -176,7 +196,6 @@ public class ProductService {
         if (dto.getName() != null && !dto.getName().isBlank()) {product.setName(dto.getName());}
         if (dto.getDescription() != null) {product.setDescription(dto.getDescription());}
         if (dto.getImageUrl() != null) {product.setImageUrl(dto.getImageUrl());}
-        if (dto.getStock() != null) {product.setStock(dto.getStock());}
 
         return toResponseDTO(product);
     }

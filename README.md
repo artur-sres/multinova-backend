@@ -99,6 +99,27 @@ You do not need to install Maven separately; the repository includes the Maven W
 
 ## Project structure
 
+### Inventory entries and the dashboard
+
+`POST /products` with positive `stock` now records an initial stock purchase using
+`stock × price.purchasePrice`, dated at creation time. Product creation, pricing,
+and the purchase share one transaction; a failure rolls back the whole operation.
+Creating a product with zero stock does not create a purchase.
+
+Subsequent entries use `POST /stock-purchases`, supplying the quantity and actual
+unit cost of that purchase. The dashboard includes both initial and subsequent
+purchases in `purchased` and subtracts them in `periodBalance`. Historical purchase
+amounts are independent of changes to the product's price records.
+
+`PATCH /products/{id}` rejects changes to the stock balance with HTTP 409. An
+unchanged stock value remains accepted for compatibility. Stock movements must
+go through purchases or sales so that balances cannot be changed silently.
+
+Existing products are not backfilled automatically: quantities, costs and dates
+from before this fix must be reconciled against real purchase records first.
+
+Service regression tests: `mvn -Dtest=*ServiceTests test`.
+
 ```text
 src/main/java/com/artur_sres/multinova/
 |-- config/       Security and application configuration
