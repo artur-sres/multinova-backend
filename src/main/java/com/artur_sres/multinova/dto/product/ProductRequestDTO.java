@@ -1,7 +1,10 @@
 package com.artur_sres.multinova.dto.product;
 
+import com.artur_sres.multinova.dto.price.PriceRequestDTO;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class ProductRequestDTO {
@@ -24,6 +27,17 @@ public class ProductRequestDTO {
 
     @Min(value = 0, message = "Stock cannot be negative.")
     private int stock;
+
+    @NotNull(message = "Price is required.")
+    @Valid
+    private PriceRequestDTO price;
+
+    public PriceRequestDTO getPrice() {
+        return price;
+    }
+    public void setPrice(PriceRequestDTO price) {
+        this.price = price;
+    }
 
     public Long getBrandId() {
         return brandId;

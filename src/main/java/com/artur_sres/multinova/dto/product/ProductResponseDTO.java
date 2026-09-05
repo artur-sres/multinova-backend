@@ -1,5 +1,6 @@
 package com.artur_sres.multinova.dto.product;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class ProductResponseDTO {
@@ -23,6 +24,10 @@ public class ProductResponseDTO {
     private String imageUrl;
 
     private int stock;
+
+    private BigDecimal purchasePrice;
+
+    private BigDecimal salePrice;
 
     private LocalDateTime createdAt;
 
@@ -103,6 +108,20 @@ public class ProductResponseDTO {
     }
     public void setStock(int stock) {
         this.stock = stock;
+    }
+
+    public BigDecimal getPurchasePrice() {
+        return purchasePrice;
+    }
+    public void setPurchasePrice(BigDecimal purchasePrice) {
+        this.purchasePrice = purchasePrice;
+    }
+
+    public BigDecimal getSalePrice() {
+        return salePrice;
+    }
+    public void setSalePrice(BigDecimal salePrice) {
+        this.salePrice = salePrice;
     }
 
     public LocalDateTime getCreatedAt() {

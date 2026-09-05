@@ -2,6 +2,7 @@ package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.domain.Brand;
 import com.artur_sres.multinova.domain.Category;
+import com.artur_sres.multinova.domain.Price;
 import com.artur_sres.multinova.domain.Product;
 import com.artur_sres.multinova.domain.User;
 import com.artur_sres.multinova.dto.product.ProductRequestDTO;
@@ -11,6 +12,7 @@ import com.artur_sres.multinova.exception.*;
 import com.artur_sres.multinova.mapper.ProductMapper;
 import com.artur_sres.multinova.repository.BrandRepository;
 import com.artur_sres.multinova.repository.CategoryRepository;
+import com.artur_sres.multinova.repository.PriceRepository;
 import com.artur_sres.multinova.repository.ProductRepository;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,13 +29,15 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final ProductMapper productMapper;
+    private final PriceRepository priceRepository;
 
-    public ProductService(ProductRepository productRepository, BrandRepository brandRepository, CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductMapper productMapper) {
+    public ProductService(ProductRepository productRepository, BrandRepository brandRepository, CategoryRepository categoryRepository, AuthenticatedUserProvider authenticatedUserProvider, ProductMapper productMapper, PriceRepository priceRepository) {
         this.productRepository = productRepository;
         this.brandRepository = brandRepository;
         this.categoryRepository = categoryRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.productMapper = productMapper;
+        this.priceRepository = priceRepository;
     }
 
     private void validateBrandCode(Brand brand, String brandCode, Long productId) {
@@ -84,8 +88,21 @@ public class ProductService {
                 .orElseThrow(() -> new ProductNotFoundException("Product not found."));
     }
 
+    private ProductResponseDTO toResponseDTO(Product product) {
+        ProductResponseDTO response = productMapper.toResponseDTO(product);
+        Price price = priceRepository.findFirstByProductIdOrderByCreatedAtDesc(product.getId())
+                .orElseThrow(() -> new PriceNotFoundException("Price not found."));
+        response.setPurchasePrice(price.getPurchasePrice());
+        response.setSalePrice(price.getSalePrice());
+        return response;
+    }
+
     @Transactional
     public ProductResponseDTO create(ProductRequestDTO dto) {
+
+        if (dto.getPrice().getSalePrice().compareTo(dto.getPrice().getPurchasePrice()) < 0) {
+            throw new SellPriceLowerThanBuyPriceException("Sale price cannot be lower than purchase price.");
+        }
 
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
@@ -106,14 +123,20 @@ public class ProductService {
 
         Product saved = productRepository.save(product);
 
-        return productMapper.toResponseDTO(saved);
+        Price price = new Price();
+        price.setProduct(saved);
+        price.setPurchasePrice(dto.getPrice().getPurchasePrice());
+        price.setSalePrice(dto.getPrice().getSalePrice());
+        priceRepository.save(price);
+
+        return toResponseDTO(saved);
     }
 
     public ProductResponseDTO searchById(Long id) {
         User currentUser = authenticatedUserProvider.getCurrentUser();
         Product product = getAuthorizedProduct(id, currentUser);
 
-        return productMapper.toResponseDTO(product);
+        return toResponseDTO(product);
     }
 
     public List<ProductResponseDTO> listAll() {
@@ -122,7 +145,7 @@ public class ProductService {
         List<Product> products = productRepository.findAllWithBrandAndCategoryByUserId(currentUser.getId());
 
         return products.stream()
-                .map(productMapper::toResponseDTO)
+                .map(this::toResponseDTO)
                 .toList();
     }
 
@@ -155,7 +178,7 @@ public class ProductService {
         if (dto.getImageUrl() != null) {product.setImageUrl(dto.getImageUrl());}
         if (dto.getStock() != null) {product.setStock(dto.getStock());}
 
-        return productMapper.toResponseDTO(product);
+        return toResponseDTO(product);
     }
 
     @Transactional
