@@ -84,7 +84,6 @@ public class CustomerService {
         if (dto.getBirthDate() != null) {customer.setBirthDate(dto.getBirthDate());}
         if (dto.getPhotoUrl() != null) {customer.setPhotoUrl(dto.getPhotoUrl());}
         if (dto.getPreferences() != null) {customer.setPreferences(dto.getPreferences());}
-        if (dto.getDebtBalance() != null) {customer.setDebtBalance(dto.getDebtBalance());}
 
         return customerMapper.toResponseDTO(customer);
     }

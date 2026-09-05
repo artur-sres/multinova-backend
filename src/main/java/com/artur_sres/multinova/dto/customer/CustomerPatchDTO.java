@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.URL;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class CustomerPatchDTO {
@@ -23,8 +22,6 @@ public class CustomerPatchDTO {
     private String photoUrl;
 
     private String preferences;
-
-    private BigDecimal debtBalance;
 
     public String getName() {return name;}
     public void setName(String name) {this.name = name;}
@@ -44,6 +41,4 @@ public class CustomerPatchDTO {
     public String getPreferences() {return preferences;}
     public void setPreferences(String preferences) {this.preferences = preferences;}
 
-    public BigDecimal getDebtBalance() {return debtBalance;}
-    public void setDebtBalance(BigDecimal debtBalance) {this.debtBalance = debtBalance;}
 }
