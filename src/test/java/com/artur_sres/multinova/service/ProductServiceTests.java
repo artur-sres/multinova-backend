@@ -106,7 +106,9 @@ class ProductServiceTests {
             when(payments.sumByUserAndPeriod(1L, from, to)).thenReturn(BigDecimal.ZERO);
             when(bills.sumPaidByUserAndPeriod(1L, from, to)).thenReturn(BigDecimal.ZERO);
             when(fixture.purchases.sumByUserAndPeriod(1L, from, to)).thenReturn(purchase.getTotalAmount());
-            var dashboard = new DashboardService(sales, payments, fixture.purchases, bills, customers, fixture.auth);
+            var entries = mock(CashEntryRepository.class);
+            when(entries.sumByUserAndPeriod(1L, from.toLocalDate(), to.toLocalDate())).thenReturn(BigDecimal.ZERO);
+            var dashboard = new DashboardService(sales, payments, fixture.purchases, bills, customers, fixture.auth, entries);
             var summary = dashboard.getSummary(from, to);
             assertEquals(new BigDecimal("37.50"), summary.getPurchased());
             assertEquals(new BigDecimal("-37.50"), summary.getPeriodBalance());

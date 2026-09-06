@@ -19,19 +19,21 @@ public class DashboardService {
     private final BillRepository billRepository;
     private final CustomerRepository customerRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CashEntryRepository cashEntryRepository;
 
     public DashboardService(SaleRepository saleRepository,
                             CustomerPaymentRepository customerPaymentRepository,
                             StockPurchaseRepository stockPurchaseRepository,
                             BillRepository billRepository,
                             CustomerRepository customerRepository,
-                            AuthenticatedUserProvider authenticatedUserProvider) {
+                            AuthenticatedUserProvider authenticatedUserProvider, CashEntryRepository cashEntryRepository) {
         this.saleRepository = saleRepository;
         this.customerPaymentRepository = customerPaymentRepository;
         this.stockPurchaseRepository = stockPurchaseRepository;
         this.billRepository = billRepository;
         this.customerRepository = customerRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.cashEntryRepository = cashEntryRepository;
     }
 
     public DashboardSummaryResponseDTO getSummary(LocalDateTime from, LocalDateTime to) {
@@ -42,6 +44,7 @@ public class DashboardService {
         BigDecimal received = customerPaymentRepository.sumByUserAndPeriod(userId, from, to);
         BigDecimal purchased = stockPurchaseRepository.sumByUserAndPeriod(userId, from, to);
         BigDecimal billsPaid = billRepository.sumPaidByUserAndPeriod(userId, from, to);
+        BigDecimal otherIncome = cashEntryRepository.sumByUserAndPeriod(userId, from.toLocalDate(), to.toLocalDate());
         BigDecimal totalReceivable = customerRepository.sumDebtBalanceByUser(userId);
         BigDecimal totalPayable = billRepository.sumPendingByUser(userId);
 
@@ -50,9 +53,10 @@ public class DashboardService {
         response.setReceived(received);
         response.setPurchased(purchased);
         response.setBillsPaid(billsPaid);
+        response.setOtherIncome(otherIncome);
         response.setTotalReceivable(totalReceivable);
         response.setTotalPayable(totalPayable);
-        response.setPeriodBalance(received.subtract(purchased).subtract(billsPaid));
+        response.setPeriodBalance(received.add(otherIncome).subtract(purchased).subtract(billsPaid));
         return response;
     }
 }

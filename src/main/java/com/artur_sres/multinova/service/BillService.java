@@ -41,6 +41,7 @@ public class BillService {
         Bill bill = new Bill();
         bill.setUser(currentUser);
         bill.setName(dto.getName());
+        bill.setDescription(dto.getDescription());
         bill.setAmount(dto.getAmount());
         bill.setDueDate(dto.getDueDate());
 

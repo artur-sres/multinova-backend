@@ -20,6 +20,7 @@ class DashboardServiceTests {
         StockPurchaseRepository purchases = mock(StockPurchaseRepository.class);
         BillRepository bills = mock(BillRepository.class);
         CustomerRepository customers = mock(CustomerRepository.class);
+        CashEntryRepository entries = mock(CashEntryRepository.class);
         AuthenticatedUserProvider auth = mock(AuthenticatedUserProvider.class);
         User user = new User();
         user.setId(7L);
@@ -28,6 +29,7 @@ class DashboardServiceTests {
         LocalDate to = LocalDate.of(2026, 9, 5);
         var start = from.atStartOfDay();
         var end = to.atTime(23, 59, 59);
+        when(entries.sumByUserAndPeriod(7L, from, to)).thenReturn(new BigDecimal("1000.00"));
         when(sales.sumCompletedByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("900.00"));
         when(payments.sumByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("100.50"));
         when(purchases.sumByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("150.25"));
@@ -35,7 +37,7 @@ class DashboardServiceTests {
         when(customers.sumDebtBalanceByUser(7L)).thenReturn(new BigDecimal("-50.00"));
         when(bills.sumPendingByUser(7L)).thenReturn(new BigDecimal("300.00"));
 
-        DashboardService service = new DashboardService(sales, payments, purchases, bills, customers, auth);
+        DashboardService service = new DashboardService(sales, payments, purchases, bills, customers, auth, entries);
         var response = new DashboardController(service).getSummary(from, to);
         assertEquals(200, response.getStatusCode().value());
         var summary = response.getBody();
@@ -46,6 +48,8 @@ class DashboardServiceTests {
         assertEquals(new BigDecimal("20.10"), summary.getBillsPaid());
         assertEquals(new BigDecimal("-50.00"), summary.getTotalReceivable());
         assertEquals(new BigDecimal("300.00"), summary.getTotalPayable());
-        assertEquals(new BigDecimal("-69.85"), summary.getPeriodBalance());
+        assertEquals(new BigDecimal("1000.00"), summary.getOtherIncome());
+        assertEquals(new BigDecimal("930.15"), summary.getPeriodBalance());
+        verify(entries).sumByUserAndPeriod(7L, from, to);
     }
 }

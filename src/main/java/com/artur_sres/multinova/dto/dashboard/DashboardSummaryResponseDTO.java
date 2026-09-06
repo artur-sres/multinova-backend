@@ -10,6 +10,10 @@ public class DashboardSummaryResponseDTO {
     private BigDecimal totalReceivable;
     private BigDecimal totalPayable;
     private BigDecimal periodBalance;
+    private BigDecimal otherIncome;
+
+    public BigDecimal getOtherIncome() {return otherIncome;}
+    public void setOtherIncome(BigDecimal otherIncome) {this.otherIncome = otherIncome;}
 
     public BigDecimal getSold() {return sold;}
     public void setSold(BigDecimal sold) {this.sold = sold;}

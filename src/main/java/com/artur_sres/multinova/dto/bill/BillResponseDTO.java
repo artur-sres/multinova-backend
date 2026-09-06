@@ -10,6 +10,8 @@ public class BillResponseDTO {
     private Long id;
     private Long userId;
     private String name;
+    private String description;
+    private LocalDateTime paidAt;
     private BigDecimal amount;
     private LocalDate dueDate;
     private BillStatus status;
@@ -24,6 +26,11 @@ public class BillResponseDTO {
 
     public String getName() {return name;}
     public void setName(String name) {this.name = name;}
+
+    public String getDescription() {return description;}
+    public void setDescription(String description) {this.description = description;}
+    public LocalDateTime getPaidAt() {return paidAt;}
+    public void setPaidAt(LocalDateTime paidAt) {this.paidAt = paidAt;}
 
     public BigDecimal getAmount() {return amount;}
     public void setAmount(BigDecimal amount) {this.amount = amount;}

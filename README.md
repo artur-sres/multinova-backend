@@ -99,6 +99,51 @@ You do not need to install Maven separately; the repository includes the Maven W
 
 ## Project structure
 
+### Cash entries and operation history
+
+Migration V22 adds cash entries. `POST /cash-entries` accepts `title`, `kind`
+(`LOAN`, `CAPITAL`, `OTHER`), a positive `amount`, `receivedOn` (today or earlier),
+and optional `description`. `GET /cash-entries` returns the user's latest 100
+entries by receipt date. These endpoints always use the authenticated user.
+
+The dashboard adds `otherIncome`, summed by receipt date, and calculates
+`periodBalance = received + otherIncome - purchased - billsPaid`. Cash entries do
+not change sales, customer debt, or bills. Loan repayments are separate bills.
+
+Migration V23 creates an indexed operation history. PostgreSQL triggers capture
+snapshots inside the source transaction for sales, cancellations, stock purchases,
+customer/product creation and personal/catalog changes, customer payments,
+bill creation/payment/deletion, and cash entries. Stock/debt changes alone do not
+generate duplicate edit events. A rolled-back transaction leaves no history.
+The history has no foreign key to the source entity, so later deletion preserves
+the snapshot. `GET /history` returns only the authenticated user's latest 100
+events, ordered by operation time and ID descending.
+
+Existing recoverable events are backfilled and marked `recovered`. Their dates
+come from surviving records (including the last update date for old cancelled
+sales). Previously deleted records and unrecorded operations cannot be recovered.
+Backfill does not create financial movements or modify existing balances.
+
+Verification: `mvn -Dtest=*ServiceTests test` covers cash validation, user scope,
+and dashboard arithmetic. `src/test/test-history.ps1` runs all migrations and the
+SQL regression checks against an isolated PostgreSQL 18 cluster initialized at
+`target/history-test-pg`, listening only on localhost port 55439. It checks the
+cluster's data directory before writing and stops the test server on completion.
+The SQL checks cover recovery, rollback, cancellation/payment idempotence,
+deletion preservation, snapshots, scope, dates and the 100-event limit.
+
+### Bills
+
+Bills accept an optional `description` in `POST /bills`, returned by the listing
+and detail responses. Migration `V21__add_bill_description.sql` adds the nullable
+text column, preserving existing bills. Responses also include `paidAt`.
+
+Bill details are immutable. `PATCH /bills/{id}/pay` records payment once, and
+`DELETE /bills/{id}` removes the bill. Pending bills contribute to the dashboard's
+global payable total; paid bills contribute to period expenses according to
+`paidAt`, not their due date. Deleting a paid bill also removes it from the paid
+total for that period. All operations are scoped to the authenticated user.
+
 ### Inventory entries and the dashboard
 
 `POST /products` with positive `stock` now records an initial stock purchase using
