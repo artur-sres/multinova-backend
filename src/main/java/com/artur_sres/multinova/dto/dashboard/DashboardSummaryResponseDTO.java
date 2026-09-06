@@ -11,6 +11,10 @@ public class DashboardSummaryResponseDTO {
     private BigDecimal totalPayable;
     private BigDecimal periodBalance;
     private BigDecimal otherIncome;
+    private BigDecimal otherOutflow;
+
+    public BigDecimal getOtherOutflow() { return otherOutflow; }
+    public void setOtherOutflow(BigDecimal otherOutflow) { this.otherOutflow = otherOutflow; }
 
     public BigDecimal getOtherIncome() {return otherIncome;}
     public void setOtherIncome(BigDecimal otherIncome) {this.otherIncome = otherIncome;}

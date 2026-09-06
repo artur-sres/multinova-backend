@@ -20,13 +20,14 @@ public class DashboardService {
     private final CustomerRepository customerRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CashEntryRepository cashEntryRepository;
+    private final CashExitRepository cashExitRepository;
 
     public DashboardService(SaleRepository saleRepository,
                             CustomerPaymentRepository customerPaymentRepository,
                             StockPurchaseRepository stockPurchaseRepository,
                             BillRepository billRepository,
                             CustomerRepository customerRepository,
-                            AuthenticatedUserProvider authenticatedUserProvider, CashEntryRepository cashEntryRepository) {
+                            AuthenticatedUserProvider authenticatedUserProvider, CashEntryRepository cashEntryRepository, CashExitRepository cashExitRepository) {
         this.saleRepository = saleRepository;
         this.customerPaymentRepository = customerPaymentRepository;
         this.stockPurchaseRepository = stockPurchaseRepository;
@@ -34,6 +35,7 @@ public class DashboardService {
         this.customerRepository = customerRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.cashEntryRepository = cashEntryRepository;
+        this.cashExitRepository = cashExitRepository;
     }
 
     public DashboardSummaryResponseDTO getSummary(LocalDateTime from, LocalDateTime to) {
@@ -44,6 +46,7 @@ public class DashboardService {
         BigDecimal received = customerPaymentRepository.sumByUserAndPeriod(userId, from, to);
         BigDecimal purchased = stockPurchaseRepository.sumByUserAndPeriod(userId, from, to);
         BigDecimal billsPaid = billRepository.sumPaidByUserAndPeriod(userId, from, to);
+        BigDecimal otherOutflow = cashExitRepository.sumByUserAndPeriod(userId, from.toLocalDate(), to.toLocalDate());
         BigDecimal otherIncome = cashEntryRepository.sumByUserAndPeriod(userId, from.toLocalDate(), to.toLocalDate());
         BigDecimal totalReceivable = customerRepository.sumDebtBalanceByUser(userId);
         BigDecimal totalPayable = billRepository.sumPendingByUser(userId);
@@ -54,9 +57,10 @@ public class DashboardService {
         response.setPurchased(purchased);
         response.setBillsPaid(billsPaid);
         response.setOtherIncome(otherIncome);
+        response.setOtherOutflow(otherOutflow);
         response.setTotalReceivable(totalReceivable);
         response.setTotalPayable(totalPayable);
-        response.setPeriodBalance(received.add(otherIncome).subtract(purchased).subtract(billsPaid));
+        response.setPeriodBalance(received.add(otherIncome).subtract(purchased).subtract(billsPaid).subtract(otherOutflow));
         return response;
     }
 }

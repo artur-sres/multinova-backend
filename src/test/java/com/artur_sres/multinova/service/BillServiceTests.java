@@ -2,6 +2,7 @@ package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.domain.Bill;
 import com.artur_sres.multinova.domain.User;
+import com.artur_sres.multinova.repository.CashExitRepository;
 import com.artur_sres.multinova.domain.enums.BillStatus;
 import com.artur_sres.multinova.dto.bill.BillRequestDTO;
 import com.artur_sres.multinova.exception.BillNotFoundException;
@@ -77,7 +78,9 @@ class BillServiceTests {
         when(purchases.sumByUserAndPeriod(7L, from, to)).thenReturn(BigDecimal.ZERO);
         var entries = mock(CashEntryRepository.class);
         when(entries.sumByUserAndPeriod(7L, from.toLocalDate(), to.toLocalDate())).thenReturn(BigDecimal.ZERO);
-        var dashboard = new DashboardService(sales, payments, purchases, bills, customers, auth, entries);
+        var exits = mock(CashExitRepository.class);
+        when(exits.sumByUserAndPeriod(7L, from.toLocalDate(), to.toLocalDate())).thenReturn(BigDecimal.ZERO);
+        var dashboard = new DashboardService(sales, payments, purchases, bills, customers, auth, entries, exits);
 
         service.create(dto);
         assertEquals(dto.getAmount(), dashboard.getSummary(from, to).getTotalPayable());

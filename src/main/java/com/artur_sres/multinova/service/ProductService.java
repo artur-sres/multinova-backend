@@ -44,6 +44,10 @@ public class ProductService {
         this.stockPurchaseService = stockPurchaseService;
     }
 
+    private String normalizeBrandCode(String brandCode) {
+        return brandCode == null || brandCode.isBlank() ? null : brandCode;
+    }
+
     private void validateBrandCode(Brand brand, String brandCode, Long productId) {
         if (brand == null) {
             if (brandCode != null && !brandCode.isBlank()) {
@@ -113,13 +117,14 @@ public class ProductService {
         Brand brand = getAuthorizedBrand(dto.getBrandId(), currentUser);
         Category category = getAuthorizedCategory(dto.getCategoryId(), currentUser);
 
-        validateBrandCode(brand, dto.getBrandCode(), null);
+        String brandCode = normalizeBrandCode(dto.getBrandCode());
+        validateBrandCode(brand, brandCode, null);
 
         Product product = new Product();
         product.setUser(currentUser);
         product.setBrand(brand);
         product.setCategory(category);
-        product.setBrandCode(dto.getBrandCode());
+        product.setBrandCode(brandCode);
         product.setName(dto.getName());
         product.setDescription(dto.getDescription());
         product.setImageUrl(dto.getImageUrl());
@@ -178,9 +183,9 @@ public class ProductService {
                 ? getAuthorizedBrand(dto.getBrandId(), currentUser)
                 : product.getBrand();
 
-        String targetBrandCode = dto.getBrandCode() != null
+        String targetBrandCode = normalizeBrandCode(dto.getBrandCode() != null
                 ? dto.getBrandCode()
-                : product.getBrandCode();
+                : product.getBrandCode());
 
         if (dto.getBrandId() != null || dto.getBrandCode() != null) {
             validateBrandCode(targetBrand, targetBrandCode, product.getId());

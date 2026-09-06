@@ -4,15 +4,8 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "products",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uq_brand_code",
-                        columnNames = {"brand_id", "brand_code"}
-                )
-        }
-)
+// Uniqueness for active products is enforced by the partial index in Flyway.
+@Table(name = "products")
 public class Product {
 
     @Id

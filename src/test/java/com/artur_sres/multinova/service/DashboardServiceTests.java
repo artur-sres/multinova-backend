@@ -2,6 +2,7 @@ package com.artur_sres.multinova.service;
 
 import com.artur_sres.multinova.controller.DashboardController;
 import com.artur_sres.multinova.domain.User;
+import com.artur_sres.multinova.repository.CashExitRepository;
 import com.artur_sres.multinova.repository.*;
 import com.artur_sres.multinova.security.AuthenticatedUserProvider;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,9 @@ class DashboardServiceTests {
         when(customers.sumDebtBalanceByUser(7L)).thenReturn(new BigDecimal("-50.00"));
         when(bills.sumPendingByUser(7L)).thenReturn(new BigDecimal("300.00"));
 
-        DashboardService service = new DashboardService(sales, payments, purchases, bills, customers, auth, entries);
+        var exits = mock(CashExitRepository.class);
+        when(exits.sumByUserAndPeriod(7L, from, to)).thenReturn(new BigDecimal("30.00"));
+        DashboardService service = new DashboardService(sales, payments, purchases, bills, customers, auth, entries, exits);
         var response = new DashboardController(service).getSummary(from, to);
         assertEquals(200, response.getStatusCode().value());
         var summary = response.getBody();
@@ -49,7 +52,9 @@ class DashboardServiceTests {
         assertEquals(new BigDecimal("-50.00"), summary.getTotalReceivable());
         assertEquals(new BigDecimal("300.00"), summary.getTotalPayable());
         assertEquals(new BigDecimal("1000.00"), summary.getOtherIncome());
-        assertEquals(new BigDecimal("930.15"), summary.getPeriodBalance());
+        assertEquals(new BigDecimal("900.15"), summary.getPeriodBalance());
+        assertEquals(new BigDecimal("30.00"), summary.getOtherOutflow());
+        verify(exits).sumByUserAndPeriod(7L, from, to);
         verify(entries).sumByUserAndPeriod(7L, from, to);
     }
 }

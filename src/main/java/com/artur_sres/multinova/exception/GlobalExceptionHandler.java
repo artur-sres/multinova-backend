@@ -11,6 +11,15 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentCustomerUpdate(org.springframework.orm.ObjectOptimisticLockingFailureException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse("Os dados foram alterados em outra operação. Atualize e tente novamente.", 409));
+    }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleStatus(org.springframework.web.server.ResponseStatusException exception) {
+        return ResponseEntity.status(exception.getStatusCode()).body(new ErrorResponse(exception.getReason(), exception.getStatusCode().value()));
+    }
 
     @ExceptionHandler(DirectStockUpdateException.class)
     public ResponseEntity<ErrorResponse> handleDirectStockUpdate(DirectStockUpdateException exception) {

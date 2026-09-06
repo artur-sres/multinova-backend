@@ -31,6 +31,7 @@ class ProductServiceTests {
         final AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
                 ProductMapperImpl.class, StockPurchaseMapperImpl.class, StockPurchaseItemMapperImpl.class);
         final ProductRepository products = mock(ProductRepository.class);
+        final BrandRepository brands = mock(BrandRepository.class);
         final PriceRepository prices = mock(PriceRepository.class);
         final StockPurchaseRepository purchases = mock(StockPurchaseRepository.class);
         final AuthenticatedUserProvider auth = mock(AuthenticatedUserProvider.class);
@@ -59,7 +60,7 @@ class ProductServiceTests {
             });
             StockPurchaseService stockService = new StockPurchaseService(
                     purchases, products, auth, context.getBean(StockPurchaseMapper.class));
-            service = new ProductService(products, mock(BrandRepository.class), mock(CategoryRepository.class),
+            service = new ProductService(products, brands, mock(CategoryRepository.class),
                     auth, context.getBean(ProductMapper.class), prices, stockService);
         }
 
@@ -76,6 +77,46 @@ class ProductServiceTests {
 
         @Override
         public void close() { context.close(); }
+    }
+
+    @Test
+    void sameBrandAllowsMultipleProductsWithoutCodesAndClearingAnExistingCode() {
+        try (var fixture = new Fixture()) {
+            Brand brand = mock(Brand.class);
+            when(brand.getId()).thenReturn(5L);
+            when(fixture.brands.findByIdAndUserId(5L, 1L)).thenReturn(Optional.of(brand));
+            for (String code : new String[]{null, "", "   ", "\t"}) {
+                var request = fixture.request(0, "1.00");
+                request.setBrandId(5L);
+                request.setBrandCode(code);
+                assertNull(fixture.service.create(request).getBrandCode());
+            }
+            var request = fixture.request(0, "1.00");
+            request.setBrandId(5L);
+            request.setBrandCode("ABC");
+            assertEquals("ABC", fixture.service.create(request).getBrandCode());
+            var patch = new ProductPatchDTO();
+            patch.setBrandCode("");
+            assertNull(fixture.service.update(2L, patch).getBrandCode());
+        }
+    }
+
+    @Test
+    void sameBrandAllowsDifferentCodesButRejectsAnActiveDuplicate() {
+        try (var fixture = new Fixture()) {
+            Brand brand = mock(Brand.class);
+            when(brand.getId()).thenReturn(5L);
+            when(fixture.brands.findByIdAndUserId(5L, 1L)).thenReturn(Optional.of(brand));
+            var request = fixture.request(0, "1.00");
+            request.setBrandId(5L);
+            for (String code : new String[]{"ABC", "DEF"}) {
+                request.setBrandCode(code);
+                assertEquals(code, fixture.service.create(request).getBrandCode());
+            }
+            when(fixture.products.existsByBrandIdAndBrandCodeAndDeletedAtIsNull(5L, "DEF")).thenReturn(true);
+            assertThrows(com.artur_sres.multinova.exception.BrandCodeAlreadyExistsException.class,
+                    () -> fixture.service.create(request));
+        }
     }
 
     @Test
@@ -108,7 +149,9 @@ class ProductServiceTests {
             when(fixture.purchases.sumByUserAndPeriod(1L, from, to)).thenReturn(purchase.getTotalAmount());
             var entries = mock(CashEntryRepository.class);
             when(entries.sumByUserAndPeriod(1L, from.toLocalDate(), to.toLocalDate())).thenReturn(BigDecimal.ZERO);
-            var dashboard = new DashboardService(sales, payments, fixture.purchases, bills, customers, fixture.auth, entries);
+            var exits = mock(CashExitRepository.class);
+            when(exits.sumByUserAndPeriod(1L, from.toLocalDate(), to.toLocalDate())).thenReturn(BigDecimal.ZERO);
+            var dashboard = new DashboardService(sales, payments, fixture.purchases, bills, customers, fixture.auth, entries, exits);
             var summary = dashboard.getSummary(from, to);
             assertEquals(new BigDecimal("37.50"), summary.getPurchased());
             assertEquals(new BigDecimal("-37.50"), summary.getPeriodBalance());

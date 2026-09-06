@@ -9,8 +9,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CustomerPaymentRepository extends JpaRepository<CustomerPayment, Long> {
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM CustomerPayment p "
-            + "WHERE p.customer.user.id = :userId AND p.paidAt BETWEEN :from AND :to")
+    @Query(value = "SELECT (SELECT COALESCE(SUM(p.amount), 0) FROM customer_payments p JOIN customers c ON c.id = p.customer_id "
+            + "WHERE c.user_id = :userId AND p.paid_at BETWEEN :from AND :to) - "
+            + "(SELECT COALESCE(SUM(r.delta), 0) FROM customer_ledger r JOIN customer_ledger original ON original.id = r.reversed_entry_id "
+            + "JOIN customers c ON c.id = r.customer_id WHERE c.user_id = :userId AND original.type = 'PAYMENT' "
+            + "AND r.recorded_at BETWEEN :from AND :to)", nativeQuery = true)
     BigDecimal sumByUserAndPeriod(@Param("userId") Long userId,
             @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 

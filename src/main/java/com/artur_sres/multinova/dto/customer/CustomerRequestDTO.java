@@ -27,6 +27,8 @@ public class CustomerRequestDTO {
     private String preferences;
 
     @NotNull(message = "Debt balance is required.")
+    @jakarta.validation.constraints.PositiveOrZero
+    @jakarta.validation.constraints.Digits(integer = 8, fraction = 2)
     private BigDecimal debtBalance;
 
     public String getName() {return name;}
