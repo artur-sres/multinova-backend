@@ -34,6 +34,7 @@ class DashboardServiceTests {
         when(sales.sumCompletedByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("900.00"));
         when(payments.sumByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("100.50"));
         when(purchases.sumByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("150.25"));
+        when(purchases.sumPurchasesByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("650.25"));
         when(bills.sumPaidByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("20.10"));
         when(customers.sumDebtBalanceByUser(7L)).thenReturn(new BigDecimal("-50.00"));
         when(bills.sumPendingByUser(7L)).thenReturn(new BigDecimal("300.00"));
@@ -47,8 +48,8 @@ class DashboardServiceTests {
         assertNotNull(summary);
         assertEquals(new BigDecimal("900.00"), summary.getSold());
         assertEquals(new BigDecimal("100.50"), summary.getReceived());
-        assertEquals(new BigDecimal("150.25"), summary.getPurchased());
-        assertEquals(new BigDecimal("20.10"), summary.getBillsPaid());
+        assertEquals(new BigDecimal("650.25"), summary.getPurchased());
+        assertEquals(new BigDecimal("170.35"), summary.getBillsPaid());
         assertEquals(new BigDecimal("-50.00"), summary.getTotalReceivable());
         assertEquals(new BigDecimal("300.00"), summary.getTotalPayable());
         assertEquals(new BigDecimal("1000.00"), summary.getOtherIncome());
@@ -56,5 +57,12 @@ class DashboardServiceTests {
         assertEquals(new BigDecimal("30.00"), summary.getOtherOutflow());
         verify(exits).sumByUserAndPeriod(7L, from, to);
         verify(entries).sumByUserAndPeriod(7L, from, to);
+        // More credit purchases or sales change commercial activity, not cash.
+        when(purchases.sumPurchasesByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("5000.00"));
+        when(sales.sumCompletedByUserAndPeriod(7L, start, end)).thenReturn(new BigDecimal("9000.00"));
+        var updated = service.getSummary(start, end);
+        assertEquals(new BigDecimal("5000.00"), updated.getPurchased());
+        assertEquals(summary.getPeriodBalance(), updated.getPeriodBalance());
+        assertEquals(updated.getReceived().add(updated.getOtherIncome()).subtract(updated.getBillsPaid()).subtract(updated.getOtherOutflow()), updated.getPeriodBalance());
     }
 }

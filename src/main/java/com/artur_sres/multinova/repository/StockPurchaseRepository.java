@@ -17,4 +17,10 @@ public interface StockPurchaseRepository extends JpaRepository<StockPurchase, Lo
             @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     List<StockPurchase> findByUserId(Long userId);
+
+    @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM StockPurchase p "
+            + "WHERE p.user.id = :userId AND p.entryType IN (com.artur_sres.multinova.domain.enums.StockEntryType.PAID, "
+            + "com.artur_sres.multinova.domain.enums.StockEntryType.PENDING) AND p.purchaseDate BETWEEN :from AND :to")
+    BigDecimal sumPurchasesByUserAndPeriod(@Param("userId") Long userId,
+            @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

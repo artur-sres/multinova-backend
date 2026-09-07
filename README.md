@@ -186,7 +186,7 @@ and optional `description`. `GET /cash-entries` returns the user's latest 100
 entries by receipt date. These endpoints always use the authenticated user.
 
 The dashboard adds `otherIncome`, summed by receipt date, and calculates
-`periodBalance = received + otherIncome - purchased - billsPaid`. Cash entries do
+`periodBalance = received + otherIncome - billsPaid - otherOutflow`. Cash entries do
 not change sales, customer debt, or bills. Loan repayments are separate bills.
 
 Migration V23 creates an indexed operation history. PostgreSQL triggers capture
@@ -233,7 +233,9 @@ Creating a product with zero stock does not create a purchase.
 Subsequent entries use `POST /stock-purchases`, supplying the quantity and actual
 unit cost of that purchase, with `entryType`: `ADJUSTMENT` (default, no cash effect),
 `PAID` (paid today), or `PENDING` (requires `dueDate` and creates a pending bill in
-the same transaction). The dashboard includes only `PAID` entries in `purchased`.
+the same transaction). The dashboard groups `PAID` and `PENDING` entries in
+`purchased`, a commercial metric that is not subtracted from the balance.
+`billsPaid` combines payments made immediately on stock entry and paid bills.
 Paying a pending bill affects `billsPaid` on its payment date, without counting
 the stock entry twice. Migration V30 preserves existing entries as `PAID` because
 their original payment state is unknown. Noncash entries use `STOCK_ENTRY` in

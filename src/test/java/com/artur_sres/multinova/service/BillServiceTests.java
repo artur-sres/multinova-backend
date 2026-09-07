@@ -76,6 +76,7 @@ class BillServiceTests {
         when(sales.sumCompletedByUserAndPeriod(7L, from, to)).thenReturn(BigDecimal.ZERO);
         when(payments.sumByUserAndPeriod(7L, from, to)).thenReturn(BigDecimal.ZERO);
         when(purchases.sumByUserAndPeriod(7L, from, to)).thenReturn(BigDecimal.ZERO);
+        when(purchases.sumPurchasesByUserAndPeriod(7L, from, to)).thenReturn(BigDecimal.ZERO);
         var entries = mock(CashEntryRepository.class);
         when(entries.sumByUserAndPeriod(7L, from.toLocalDate(), to.toLocalDate())).thenReturn(BigDecimal.ZERO);
         var exits = mock(CashExitRepository.class);

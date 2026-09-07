@@ -44,8 +44,10 @@ public class DashboardService {
 
         BigDecimal sold = saleRepository.sumCompletedByUserAndPeriod(userId, from, to);
         BigDecimal received = customerPaymentRepository.sumByUserAndPeriod(userId, from, to);
-        BigDecimal purchased = stockPurchaseRepository.sumByUserAndPeriod(userId, from, to);
-        BigDecimal billsPaid = billRepository.sumPaidByUserAndPeriod(userId, from, to);
+        BigDecimal purchased = stockPurchaseRepository.sumPurchasesByUserAndPeriod(userId, from, to);
+        BigDecimal stockPaid = stockPurchaseRepository.sumByUserAndPeriod(userId, from, to);
+        // Immediate stock payments and later bill payments are disjoint cash outflows.
+        BigDecimal billsPaid = billRepository.sumPaidByUserAndPeriod(userId, from, to).add(stockPaid);
         BigDecimal otherOutflow = cashExitRepository.sumByUserAndPeriod(userId, from.toLocalDate(), to.toLocalDate());
         BigDecimal otherIncome = cashEntryRepository.sumByUserAndPeriod(userId, from.toLocalDate(), to.toLocalDate());
         BigDecimal totalReceivable = customerRepository.sumDebtBalanceByUser(userId);
@@ -60,7 +62,7 @@ public class DashboardService {
         response.setOtherOutflow(otherOutflow);
         response.setTotalReceivable(totalReceivable);
         response.setTotalPayable(totalPayable);
-        response.setPeriodBalance(received.add(otherIncome).subtract(purchased).subtract(billsPaid).subtract(otherOutflow));
+        response.setPeriodBalance(received.add(otherIncome).subtract(billsPaid).subtract(otherOutflow));
         return response;
     }
 }
