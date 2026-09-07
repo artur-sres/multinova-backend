@@ -22,4 +22,9 @@ public class CustomerStatementController {
     public void reverse(@PathVariable long customerId, @PathVariable long entryId, @Valid @RequestBody ReversalRequest request) {
         service.reverse(customerId, entryId, request.reason());
     }
+
+    @GetMapping("/{entryId}/receipt")
+    public CustomerStatementService.Receipt receipt(@PathVariable long customerId, @PathVariable long entryId) {
+        return service.receipt(customerId, entryId);
+    }
 }

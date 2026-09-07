@@ -8,6 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
+    @Mapping(target = "imageUrl", expression = "java(product.getImageKey() == null ? product.getImageUrl() : \"/products/\" + product.getId() + \"/image?v=\" + product.getImageKey())")
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "brand.id", target = "brandId")
     @Mapping(source = "brand.name", target = "brandName")

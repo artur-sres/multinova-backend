@@ -1,0 +1,2 @@
+ALTER TABLE products ADD COLUMN image_key VARCHAR(100);
+ALTER TABLE customers ADD COLUMN image_key VARCHAR(100);

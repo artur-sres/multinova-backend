@@ -11,7 +11,7 @@ import java.util.List;
 public interface SaleItemMapper {
 
     @Mapping(source = "product.id", target = "productId")
-    @Mapping(source = "product.name", target = "productName")
+    @Mapping(source = "productName", target = "productName")
     SaleItemResponseDTO toResponseDTO(SaleItem saleItem);
 
     List<SaleItemResponseDTO> toResponseDTOList(List<SaleItem> saleItems);

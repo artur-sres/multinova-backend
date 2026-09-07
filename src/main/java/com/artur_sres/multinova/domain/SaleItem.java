@@ -29,6 +29,11 @@ public class SaleItem {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal subtotal;
 
+    @Column(name = "product_name", nullable = false)
+    private String productName;
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
+
     public Long getId() {return id;}
     public void setId(Long id) {this.id = id;}
 

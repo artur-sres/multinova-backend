@@ -1,3 +1,4 @@
+param([switch]$StatementTests)
 $ErrorActionPreference = 'Stop'
 $testRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $testData = Join-Path $testRoot 'target/history-test-pg'
@@ -28,6 +29,14 @@ try {
     }
     & "$testBin/psql.exe" -X -h 127.0.0.1 -p $testPort -U postgres -d $testDatabase -v ON_ERROR_STOP=1 -f (Join-Path $PSScriptRoot 'history-check.sql')
     if ($LASTEXITCODE -ne 0) { throw 'SQL checks failed' }
+    if ($StatementTests) {
+        $previousTestUrl = $env:MULTINOVA_STATEMENT_TEST_URL
+        try {
+            $env:MULTINOVA_STATEMENT_TEST_URL = "jdbc:postgresql://127.0.0.1:$testPort/$testDatabase"
+            & mvn -f (Join-Path $testRoot 'pom.xml') '-Dtest=CustomerStatementIntegrationTests' test
+            if ($LASTEXITCODE -ne 0) { throw 'Statement integration checks failed' }
+        } finally { $env:MULTINOVA_STATEMENT_TEST_URL = $previousTestUrl }
+    }
 } finally {
     if (!$testProcess.HasExited) { & "$testBin/pg_ctl.exe" -D $testData stop -m fast -w }
 }

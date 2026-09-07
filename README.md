@@ -1,5 +1,71 @@
 # MultiNova API
 
+### Detailed statements and symbolic receipts
+
+Migration V29 preserves product names on sale items and customer names on ledger
+entries. Existing names are recovered from the available current records and
+explicitly marked as recovered; subsequent renames do not rewrite new snapshots.
+The customer statement includes sale items (quantity, unit price and subtotal),
+source references, cancellation status and linked reversal reasons. Balances
+continue to follow recording order, independently of the effective date.
+
+Authenticated receipt endpoints:
+
+- `GET /customers/{customerId}/statement/{entryId}/receipt`
+- `GET /sales/{id}/receipt`
+
+Receipts are available for customer purchases (sales) and payments, including
+explicit cancelled/reversed status. They include historical balances and an
+issuance timestamp. A purchase receipt never declares payment; payments apply
+to the customer's overall balance and are not allocated to individual sales.
+These are symbolic, non-fiscal records. No public links or messaging service is
+created. The frontend lets the user share/copy text, download a PNG or print/PDF.
+
+History filters apply automatically with a 300 ms debounce. Period filters on
+the dashboard, bills and sales apply on valid changes. History, customer data,
+statements and dashboard queries refresh after successful mutations, changes
+in another tab, reconnecting or returning to the app. Requests are cancelled
+when superseded; transient failures retry twice without continuous polling.
+
+Validation: `powershell -ExecutionPolicy Bypass -File src/test/test-history.ps1 -StatementTests`
+applies all migrations to an isolated test database and tests item/name snapshots,
+balances, reversals, cancellation states and receipt ownership. Run the frontend
+checks with `npm run lint`, `npm run build`, `npm test`; after building, Windows
+users with Edge can run `node tests/browser-history.cjs` for a mocked-API browser
+test of automatic search, pagination reset, statement details, sharing and PNG.
+
+### Local product and customer images
+
+Product and customer forms accept JPEG/PNG uploads up to 5 MB. The backend
+checks the decoded format and rejects images over 20 megapixels, then resizes
+to at most 1200 pixels per side and writes a fresh PNG without original metadata.
+No cloud account or paid service is required.
+
+Start the backend from `multinova-backend`; images are created in `uploads/`
+inside that working directory. The directory is ignored by Git and survives
+rebuilds. Set `IMAGE_STORAGE_DIRECTORY` to an absolute path if launching the
+backend from different working directories. Keep the database and this folder
+together when moving or backing up local data.
+
+Flyway migration V28 adds nullable image keys, preserving existing image URLs.
+Restart the backend to apply it. `PUT` (multipart field `file`), `GET`, and
+`DELETE` are available at `/products/{id}/image` and `/customers/{id}/photo`.
+Every operation requires JWT authentication and checks record ownership. The
+frontend fetches private images with the Authorization header and displays a
+temporary browser object URL; the uploads directory is not publicly served.
+
+Replacing/removing a photo deletes the previous local file after database
+commit; a rolled-back replacement deletes the new file. Abrupt process or disk
+failures can still leave orphan files. Soft-deleted products retain their files
+but cannot serve them. This implementation is intended for local development.
+
+When creating a record, its data is saved before the photo. If uploading fails,
+the form reports that the record was saved and retries using its existing ID.
+
+Validation: `mvn "-Dtest=ImageStorageServiceTests,CatalogImageServiceTests" test`
+covers file validation, resizing, persistence, ownership checks and transaction
+cleanup. Frontend checks: `npm run lint`, `npm run build`, and `npm test`.
+
 **Backend REST API for MultiNova, a small-business management system for products, inventory, customers, sales, and bills.**
 
 ![Java](https://img.shields.io/badge/Java-21-blue)

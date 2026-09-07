@@ -34,3 +34,6 @@ build/
 
 .env
 .run/MultiNovaApplication.run.xml
+
+# Local uploaded images
+uploads/

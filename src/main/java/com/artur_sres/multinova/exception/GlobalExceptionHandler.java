@@ -11,6 +11,11 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleUploadSize(org.springframework.web.multipart.MaxUploadSizeExceededException exception) {
+        return ResponseEntity.status(413).body(new ErrorResponse("Selecione uma imagem de até 5 MB.", 413));
+    }
+
     @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleConcurrentCustomerUpdate(org.springframework.orm.ObjectOptimisticLockingFailureException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse("Os dados foram alterados em outra operação. Atualize e tente novamente.", 409));

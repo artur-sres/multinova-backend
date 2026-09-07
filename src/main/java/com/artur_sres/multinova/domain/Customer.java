@@ -12,6 +12,12 @@ public class Customer {
     @Version
     private Long version;
 
+    @Column(name = "image_key", length = 100)
+    private String imageKey;
+
+    public String getImageKey() { return imageKey; }
+    public void setImageKey(String imageKey) { this.imageKey = imageKey; }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

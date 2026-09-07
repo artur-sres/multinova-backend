@@ -8,6 +8,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface CustomerMapper {
 
+    @Mapping(target = "photoUrl", expression = "java(customer.getImageKey() == null ? customer.getPhotoUrl() : \"/customers/\" + customer.getId() + \"/photo?v=\" + customer.getImageKey())")
     @Mapping(source = "user.id", target = "userId")
     CustomerResponseDTO toResponseDTO(Customer customer);
 }

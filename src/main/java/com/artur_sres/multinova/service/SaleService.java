@@ -79,6 +79,7 @@ public class SaleService {
             SaleItem saleItem = new SaleItem();
             saleItem.setSale(sale);
             saleItem.setProduct(product);
+            saleItem.setProductName(product.getName());
             saleItem.setQuantity(saleItemRequestDTO.getQuantity());
             saleItem.setUnitPrice(saleItemRequestDTO.getUnitPrice());
             saleItem.setSubtotal(saleItem.getUnitPrice().multiply(BigDecimal.valueOf(saleItem.getQuantity())));
