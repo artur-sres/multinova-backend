@@ -46,6 +46,17 @@ class CustomerStatementIntegrationTests {
             assertEquals(payment.longValue(), paid.sourceId());
             assertEquals(new BigDecimal("45.00"), paid.balance());
             assertEquals("REGISTRADO", service.saleReceipt(sale).status());
+            assertEquals(new BigDecimal("45.00"), service.saleReceipt(sale).currentBalance());
+            assertEquals("Cliente renomeado", service.saleReceipt(sale).customerName());
+            var export = service.export(customer, 1);
+            assertEquals(1, export.items().size());
+            assertTrue(export.hasMore());
+            assertEquals("PAYMENT", export.items().getFirst().type());
+            assertEquals(new BigDecimal("45.00"), export.currentBalance());
+            assertEquals(3, service.export(customer, 50).items().size());
+            assertFalse(service.export(customer, 50).hasMore());
+            assertThrows(ResponseStatusException.class, () -> service.export(customer, 0));
+            assertThrows(ResponseStatusException.class, () -> service.export(customer, 501));
             service.reverse(customer, paid.id(), "Lançamento duplicado");
             assertEquals("ESTORNADO", service.receipt(customer, paid.id()).status());
             assertTrue(service.receipt(customer, paid.id()).entry().reversalDescription().contains("Lançamento duplicado"));
@@ -61,6 +72,32 @@ class CustomerStatementIntegrationTests {
             assertThrows(ResponseStatusException.class, () -> service.statement(customer, 0));
             assertThrows(ResponseStatusException.class, () -> service.receipt(customer, paid.id()));
             assertThrows(ResponseStatusException.class, () -> service.saleReceipt(sale));
+            assertThrows(ResponseStatusException.class, () -> service.export(customer, 50));
+        });
+    }
+
+    @Test void discountedItemsSurviveInReceiptsAndExport() {
+        var ds = new DriverManagerDataSource(System.getenv("MULTINOVA_STATEMENT_TEST_URL"), "postgres", "");
+        var jdbc = new JdbcTemplate(ds);
+        new TransactionTemplate(new DataSourceTransactionManager(ds)).executeWithoutResult(tx -> {
+            tx.setRollbackOnly();
+            Long owner = jdbc.queryForObject("INSERT INTO users(name,email,password) VALUES ('Loja',?,'test') RETURNING id", Long.class, UUID.randomUUID() + "@test.invalid");
+            Long customer = jdbc.queryForObject("INSERT INTO customers(user_id,name,debt_balance) VALUES (?,'Ana',0) RETURNING id", Long.class, owner);
+            Long product = jdbc.queryForObject("INSERT INTO products(user_id,name,stock) VALUES (?,'Café',5) RETURNING id", Long.class, owner);
+            Long sale = jdbc.queryForObject("INSERT INTO sales(user_id,customer_id,total_amount) VALUES (?,?,22.50) RETURNING id", Long.class, owner, customer);
+            jdbc.update("INSERT INTO sale_items(sale_id,product_id,quantity,unit_price,subtotal,discount_type,discount_value,discount_amount) VALUES (?,?,2,12.50,22.50,'PERCENTAGE',10,2.50)", sale, product);
+            jdbc.update("UPDATE customers SET debt_balance=22.50 WHERE id=?", customer);
+            var auth = mock(AuthenticatedUserProvider.class);
+            var user = new User(); user.setId(owner); when(auth.getCurrentUser()).thenReturn(user);
+            var service = new CustomerStatementService(jdbc, auth);
+            var receipt = service.saleReceipt(sale);
+            var item = receipt.entry().items().getFirst();
+            assertEquals("PERCENTAGE", item.discountType());
+            assertEquals(new BigDecimal("10.00"), item.discountValue());
+            assertEquals(new BigDecimal("2.50"), item.discountAmount());
+            assertEquals(new BigDecimal("22.50"), item.subtotal());
+            assertEquals(item, service.export(customer, 25).items().getFirst().items().getFirst());
+            assertEquals(new BigDecimal("22.50"), receipt.currentBalance());
         });
     }
 }

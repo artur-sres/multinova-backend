@@ -5,8 +5,20 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
+import com.artur_sres.multinova.domain.enums.DiscountType;
+import jakarta.validation.constraints.Digits;
 
 public class SaleItemRequestDTO {
+    @NotNull
+    private DiscountType discountType = DiscountType.NONE;
+    @NotNull
+    @PositiveOrZero
+    @Digits(integer = 10, fraction = 2)
+    private BigDecimal discountValue = BigDecimal.ZERO;
+    public DiscountType getDiscountType() {return discountType;}
+    public void setDiscountType(DiscountType value) {discountType = value;}
+    public BigDecimal getDiscountValue() {return discountValue;}
+    public void setDiscountValue(BigDecimal value) {discountValue = value;}
 
     @NotNull(message = "Product is required.")
     private Long productId;
@@ -17,6 +29,7 @@ public class SaleItemRequestDTO {
 
     @NotNull(message = "Unit price is required.")
     @PositiveOrZero(message = "Unit price must be zero or greater.")
+    @Digits(integer = 8, fraction = 2)
     private BigDecimal unitPrice;
 
     public Long getProductId() {return productId;}

@@ -44,7 +44,11 @@ BEGIN
     IF EXISTS (SELECT 1 FROM operation_history WHERE type = 'PRODUCT_UPDATED') THEN RAISE EXCEPTION 'Stock updates produced duplicate events'; END IF;
     UPDATE products SET name = 'Produto atualizado' WHERE id = 1;
     UPDATE products SET deleted_at = CURRENT_TIMESTAMP WHERE id = 1;
-    IF NOT EXISTS (SELECT 1 FROM operation_history WHERE type = 'STOCK_PURCHASE' AND amount = 123.45) THEN RAISE EXCEPTION 'Stock event missing'; END IF;
+    IF NOT EXISTS (SELECT 1 FROM operation_history WHERE type = 'STOCK_ENTRY' AND amount = 123.45) THEN RAISE EXCEPTION 'Unpaid stock event missing'; END IF;
+    INSERT INTO stock_purchases (user_id, total_amount, entry_type) VALUES (1, 40, 'PAID'), (1, 80, 'PENDING'), (2, 500, 'PAID');
+    IF (SELECT SUM(total_amount) FROM stock_purchases WHERE user_id = 1 AND entry_type = 'PAID' AND purchase_date::date = CURRENT_DATE) <> 40 THEN RAISE EXCEPTION 'Unpaid stock affected cash balance'; END IF;
+    IF NOT EXISTS (SELECT 1 FROM operation_history WHERE user_id = 1 AND type = 'STOCK_PURCHASE' AND amount = 40) THEN RAISE EXCEPTION 'Paid purchase event missing'; END IF;
+    IF NOT EXISTS (SELECT 1 FROM operation_history WHERE user_id = 1 AND type = 'STOCK_ENTRY' AND amount = 80) THEN RAISE EXCEPTION 'Pending purchase classified as payment'; END IF;
     IF NOT EXISTS (SELECT 1 FROM operation_history WHERE type = 'CUSTOMER_PAYMENT' AND user_id = 1 AND amount = 12.50) THEN RAISE EXCEPTION 'Payment event missing'; END IF;
     IF NOT EXISTS (SELECT 1 FROM operation_history WHERE type = 'PRODUCT_DELETED') THEN RAISE EXCEPTION 'Product deletion missing'; END IF;
     IF NOT EXISTS (SELECT 1 FROM operation_history WHERE type = 'CUSTOMER_UPDATED') THEN RAISE EXCEPTION 'Customer edit missing'; END IF;

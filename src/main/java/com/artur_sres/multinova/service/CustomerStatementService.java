@@ -16,7 +16,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Service
 public class CustomerStatementService {
-    public record Item(long productId, String productName, int quantity, BigDecimal unitPrice, BigDecimal subtotal, boolean nameRecovered) {}
+    public record Item(long productId, String productName, int quantity, BigDecimal unitPrice, BigDecimal subtotal, boolean nameRecovered,
+                       String discountType, BigDecimal discountValue, BigDecimal discountAmount) {}
     public record Entry(long id, String type, String description, BigDecimal delta, BigDecimal balance,
                         LocalDateTime effectiveAt, LocalDateTime recordedAt, boolean recovered, boolean reversed, boolean reversible,
                         long sourceId, Long reversedEntryId, Long reversalId, String reversalDescription, String originalType,
@@ -27,7 +28,10 @@ public class CustomerStatementService {
                     sourceId, reversedEntryId, reversalId, reversalDescription, originalType, saleStatus, customerName, nameRecovered, values);
         }
     }
-    public record Receipt(String reference, String issuer, String status, LocalDateTime issuedAt, BigDecimal balanceBefore, Entry entry) {}
+    public record Receipt(String reference, String issuer, String status, LocalDateTime issuedAt, BigDecimal balanceBefore,
+                          BigDecimal currentBalance, String customerName, Entry entry) {}
+    public record Export(String kind, String reference, String issuer, String customerName, LocalDateTime issuedAt,
+                         BigDecimal currentBalance, List<Entry> items, boolean hasMore, int limit) {}
     public record Page(List<Entry> items, boolean hasMore, int page) {}
     private final JdbcTemplate jdbc;
     private final AuthenticatedUserProvider auth;
@@ -39,6 +43,17 @@ public class CustomerStatementService {
         authorize(customerId, false);
         var entries = entries(customerId, " ORDER BY CASE WHEN m.type = 'INITIAL' THEN 0 ELSE 1 END DESC, m.recorded_at DESC, m.id DESC LIMIT 26 OFFSET ?", page * 25);
         return new Page(entries.stream().limit(25).toList(), entries.size() > 25, page);
+    }
+
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
+    public Export export(long customerId, int limit) {
+        if (limit < 1 || limit > 500) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Escolha de 1 a 500 movimentações.");
+        authorize(customerId, false);
+        var customer = jdbc.queryForMap("SELECT name, COALESCE(debt_balance, 0) AS balance FROM customers WHERE id = ?", customerId);
+        var values = entries(customerId, " ORDER BY CASE WHEN m.type = 'INITIAL' THEN 0 ELSE 1 END DESC, m.recorded_at DESC, m.id DESC LIMIT ?", limit + 1);
+        return new Export("STATEMENT", "HISTORICO-" + customerId, auth.getCurrentUser().getName(),
+                (String) customer.get("name"), LocalDateTime.now(), (BigDecimal) customer.get("balance"),
+                values.stream().limit(limit).toList(), values.size() > limit, limit);
     }
 
     private List<Entry> entries(long customerId, String suffix, Object value) {
@@ -69,7 +84,8 @@ public class CustomerStatementService {
                     """, Map.of("customer", customerId, "ids", saleIds), (org.springframework.jdbc.core.RowCallbackHandler) rs ->
                     items.computeIfAbsent(rs.getLong("sale_id"), key -> new ArrayList<>()).add(new Item(rs.getLong("product_id"),
                             rs.getString("product_name"), rs.getInt("quantity"), rs.getBigDecimal("unit_price"),
-                            rs.getBigDecimal("subtotal"), rs.getBoolean("name_recovered"))));
+                            rs.getBigDecimal("subtotal"), rs.getBoolean("name_recovered"), rs.getString("discount_type"),
+                            rs.getBigDecimal("discount_value"), rs.getBigDecimal("discount_amount"))));
         }
         return entries.stream().map(e -> e.withItems(List.of("SALE", "SALE_CANCELLED").contains(e.type())
                 ? items.getOrDefault(e.sourceId(), List.of()) : List.of())).toList();
@@ -84,8 +100,10 @@ public class CustomerStatementService {
         if (!List.of("SALE", "PAYMENT").contains(entry.type()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Comprovantes disponíveis para compras e pagamentos.");
         String status = entry.reversed() ? "ESTORNADO" : "CANCELLED".equals(entry.saleStatus()) ? "CANCELADO" : "REGISTRADO";
+        var customer = jdbc.queryForMap("SELECT name, COALESCE(debt_balance, 0) AS balance FROM customers WHERE id = ?", customerId);
         return new Receipt((entry.type().equals("SALE") ? "COMPRA-" : "PAGAMENTO-") + entry.sourceId(),
-                auth.getCurrentUser().getName(), status, LocalDateTime.now(), entry.balanceBefore(), entry);
+                auth.getCurrentUser().getName(), status, LocalDateTime.now(), entry.balanceBefore(),
+                (BigDecimal) customer.get("balance"), (String) customer.get("name"), entry);
     }
 
     @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)

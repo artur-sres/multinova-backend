@@ -59,7 +59,7 @@ class ProductServiceTests {
                 return recordedPurchase;
             });
             StockPurchaseService stockService = new StockPurchaseService(
-                    purchases, products, auth, context.getBean(StockPurchaseMapper.class));
+                    purchases, products, auth, context.getBean(StockPurchaseMapper.class), mock(BillRepository.class));
             service = new ProductService(products, brands, mock(CategoryRepository.class),
                     auth, context.getBean(ProductMapper.class), prices, stockService);
         }

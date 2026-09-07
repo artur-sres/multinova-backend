@@ -1,8 +1,18 @@
 package com.artur_sres.multinova.dto.sale_item;
 
 import java.math.BigDecimal;
+import com.artur_sres.multinova.domain.enums.DiscountType;
 
 public class SaleItemResponseDTO {
+    private DiscountType discountType;
+    private BigDecimal discountValue;
+    private BigDecimal discountAmount;
+    public DiscountType getDiscountType() {return discountType;}
+    public void setDiscountType(DiscountType value) {discountType = value;}
+    public BigDecimal getDiscountValue() {return discountValue;}
+    public void setDiscountValue(BigDecimal value) {discountValue = value;}
+    public BigDecimal getDiscountAmount() {return discountAmount;}
+    public void setDiscountAmount(BigDecimal value) {discountAmount = value;}
     private Long productId;
     private String productName;
     private Integer quantity;

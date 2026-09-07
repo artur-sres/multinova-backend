@@ -1,6 +1,6 @@
 # MultiNova API
 
-### Detailed statements and symbolic receipts
+### Customer summaries, exports and discounts
 
 Migration V29 preserves product names on sale items and customer names on ledger
 entries. Existing names are recovered from the available current records and
@@ -13,13 +13,26 @@ Authenticated receipt endpoints:
 
 - `GET /customers/{customerId}/statement/{entryId}/receipt`
 - `GET /sales/{id}/receipt`
+- `GET /customers/{customerId}/statement/export?limit=50` (1–500 most recent entries)
 
 Receipts are available for customer purchases (sales) and payments, including
-explicit cancelled/reversed status. They include historical balances and an
-issuance timestamp. A purchase receipt never declares payment; payments apply
+explicit cancelled/reversed status. They include the current customer name and
+balance in a consistent snapshot at issuance, alongside the historical entry.
+The customer-facing summary shows the action, products, discounts and current
+amount due, available credit or settled balance. A purchase never declares payment; payments apply
 to the customer's overall balance and are not allocated to individual sales.
 These are symbolic, non-fiscal records. No public links or messaging service is
-created. The frontend lets the user share/copy text, download a PNG or print/PDF.
+created. The frontend lets the user share/copy text, download text or PNG, or print/PDF.
+History export includes purchases, payments, cancellations and other account
+movements with item details, and explicitly signals when older entries are omitted.
+
+Migration V31 adds per-item discounts. `POST /sales` accepts `discountType`
+(`NONE`, `PERCENTAGE`, `AMOUNT`) and `discountValue` on each item. The original
+`unitPrice` is preserved. Discounts apply to `quantity × unitPrice`; percentages
+round once per line to cents (HALF_UP), and fixed amounts are per line, not per
+unit. The server validates limits and calculates `discountAmount`, `subtotal`
+and the sale total. Debt, dashboard totals and cancellation use the net total.
+Old items retain zero discount. Deploy frontend and backend together.
 
 History filters apply automatically with a 300 ms debounce. Period filters on
 the dashboard, bills and sales apply on valid changes. History, customer data,
@@ -213,13 +226,18 @@ total for that period. All operations are scoped to the authenticated user.
 ### Inventory entries and the dashboard
 
 `POST /products` with positive `stock` now records an initial stock purchase using
-`stock × price.purchasePrice`, dated at creation time. Product creation, pricing,
+`stock × price.purchasePrice`, dated at creation time, as an `ADJUSTMENT` without payment. Product creation, pricing,
 and the purchase share one transaction; a failure rolls back the whole operation.
 Creating a product with zero stock does not create a purchase.
 
 Subsequent entries use `POST /stock-purchases`, supplying the quantity and actual
-unit cost of that purchase. The dashboard includes both initial and subsequent
-purchases in `purchased` and subtracts them in `periodBalance`. Historical purchase
+unit cost of that purchase, with `entryType`: `ADJUSTMENT` (default, no cash effect),
+`PAID` (paid today), or `PENDING` (requires `dueDate` and creates a pending bill in
+the same transaction). The dashboard includes only `PAID` entries in `purchased`.
+Paying a pending bill affects `billsPaid` on its payment date, without counting
+the stock entry twice. Migration V30 preserves existing entries as `PAID` because
+their original payment state is unknown. Noncash entries use `STOCK_ENTRY` in
+history and are excluded from financial filters. Historical purchase
 amounts are independent of changes to the product's price records.
 
 `PATCH /products/{id}` rejects changes to the stock balance with HTTP 409. An

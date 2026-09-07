@@ -1,12 +1,16 @@
 package com.artur_sres.multinova.dto.stock_purchase;
 
 import com.artur_sres.multinova.dto.stock_purchase_item.StockPurchaseItemResponseDTO;
+import com.artur_sres.multinova.domain.enums.StockEntryType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class StockPurchaseResponseDTO {
+    private StockEntryType entryType;
+    public StockEntryType getEntryType() {return entryType;}
+    public void setEntryType(StockEntryType entryType) {this.entryType = entryType;}
     private Long id;
     private BigDecimal totalAmount;
     private LocalDateTime purchaseDate;

@@ -74,7 +74,6 @@ public class SaleService {
             if (product.getStock() < quantity) {
                 throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
             }
-            product.setStock(product.getStock() - quantity);
 
             SaleItem saleItem = new SaleItem();
             saleItem.setSale(sale);
@@ -82,7 +81,12 @@ public class SaleService {
             saleItem.setProductName(product.getName());
             saleItem.setQuantity(saleItemRequestDTO.getQuantity());
             saleItem.setUnitPrice(saleItemRequestDTO.getUnitPrice());
-            saleItem.setSubtotal(saleItem.getUnitPrice().multiply(BigDecimal.valueOf(saleItem.getQuantity())));
+            BigDecimal gross = saleItem.getUnitPrice().multiply(BigDecimal.valueOf(saleItem.getQuantity()));
+            saleItem.setDiscountType(saleItemRequestDTO.getDiscountType());
+            saleItem.setDiscountValue(saleItemRequestDTO.getDiscountValue());
+            saleItem.setDiscountAmount(SaleDiscount.amount(gross, saleItem.getDiscountType(), saleItem.getDiscountValue()));
+            saleItem.setSubtotal(gross.subtract(saleItem.getDiscountAmount()));
+            product.setStock(product.getStock() - quantity);
 
             sale.addToTotalAmount(saleItem.getSubtotal());
             sale.addItem(saleItem);

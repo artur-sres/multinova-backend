@@ -23,6 +23,11 @@ public class CustomerStatementController {
         service.reverse(customerId, entryId, request.reason());
     }
 
+    @GetMapping("/export")
+    public CustomerStatementService.Export export(@PathVariable long customerId, @RequestParam(defaultValue = "50") int limit) {
+        return service.export(customerId, limit);
+    }
+
     @GetMapping("/{entryId}/receipt")
     public CustomerStatementService.Receipt receipt(@PathVariable long customerId, @PathVariable long entryId) {
         return service.receipt(customerId, entryId);

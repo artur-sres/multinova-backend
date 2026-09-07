@@ -4,6 +4,11 @@ import com.artur_sres.multinova.domain.Product;
 import com.artur_sres.multinova.domain.StockPurchase;
 import com.artur_sres.multinova.domain.StockPurchaseItem;
 import com.artur_sres.multinova.domain.User;
+import com.artur_sres.multinova.domain.Bill;
+import com.artur_sres.multinova.domain.enums.StockEntryType;
+import com.artur_sres.multinova.repository.BillRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.artur_sres.multinova.dto.stock_purchase.StockPurchaseRequestDTO;
 import com.artur_sres.multinova.dto.stock_purchase.StockPurchaseResponseDTO;
 import com.artur_sres.multinova.dto.stock_purchase_item.StockPurchaseItemRequestDTO;
@@ -26,15 +31,17 @@ public class StockPurchaseService {
     private final ProductRepository productRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final StockPurchaseMapper stockPurchaseMapper;
+    private final BillRepository billRepository;
 
     public StockPurchaseService(StockPurchaseRepository stockPurchaseRepository,
                                 ProductRepository productRepository,
                                 AuthenticatedUserProvider authenticatedUserProvider,
-                                StockPurchaseMapper stockPurchaseMapper) {
+                                StockPurchaseMapper stockPurchaseMapper, BillRepository billRepository) {
         this.stockPurchaseRepository = stockPurchaseRepository;
         this.productRepository = productRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.stockPurchaseMapper = stockPurchaseMapper;
+        this.billRepository = billRepository;
     }
 
     private Product getAuthorizedProduct(Long id, User user) {
@@ -44,10 +51,14 @@ public class StockPurchaseService {
 
     @Transactional
     public StockPurchaseResponseDTO create(StockPurchaseRequestDTO dto) {
+        if (dto.getEntryType() == null || (dto.getEntryType() == StockEntryType.PENDING && dto.getDueDate() == null)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Informe o tipo de entrada e o vencimento da compra a prazo.");
+        }
         User currentUser = authenticatedUserProvider.getCurrentUser();
 
         StockPurchase stockPurchase = new StockPurchase();
         stockPurchase.setUser(currentUser);
+        stockPurchase.setEntryType(dto.getEntryType());
 
         for (StockPurchaseItemRequestDTO itemDTO : dto.getItems()) {
             Product product = getAuthorizedProduct(itemDTO.getProductId(), currentUser);
@@ -65,6 +76,17 @@ public class StockPurchaseService {
         }
 
         StockPurchase saved = stockPurchaseRepository.save(stockPurchase);
+        if (dto.getEntryType() == StockEntryType.PENDING) {
+            Bill bill = new Bill();
+            bill.setUser(currentUser);
+            bill.setName("Compra de estoque #" + saved.getId());
+            bill.setDescription("Entrada de estoque a prazo. " + saved.getItems().stream()
+                    .map(item -> item.getQuantity() + " x " + item.getProduct().getName())
+                    .collect(Collectors.joining(", ")));
+            bill.setAmount(saved.getTotalAmount());
+            bill.setDueDate(dto.getDueDate());
+            billRepository.save(bill);
+        }
         return stockPurchaseMapper.toResponseDTO(saved);
     }
 

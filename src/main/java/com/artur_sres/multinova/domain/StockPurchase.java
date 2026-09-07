@@ -1,6 +1,7 @@
 package com.artur_sres.multinova.domain;
 
 import jakarta.persistence.*;
+import com.artur_sres.multinova.domain.enums.StockEntryType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -10,6 +11,13 @@ import java.util.List;
 @Entity
 @Table(name = "stock_purchases")
 public class StockPurchase {
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entry_type", nullable = false, length = 20)
+    private StockEntryType entryType = StockEntryType.ADJUSTMENT;
+
+    public StockEntryType getEntryType() {return entryType;}
+    public void setEntryType(StockEntryType entryType) {this.entryType = entryType;}
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

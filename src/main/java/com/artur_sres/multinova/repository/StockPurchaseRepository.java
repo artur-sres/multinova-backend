@@ -11,7 +11,8 @@ import java.util.List;
 
 public interface StockPurchaseRepository extends JpaRepository<StockPurchase, Long> {
     @Query("SELECT COALESCE(SUM(p.totalAmount), 0) FROM StockPurchase p "
-            + "WHERE p.user.id = :userId AND p.purchaseDate BETWEEN :from AND :to")
+            + "WHERE p.user.id = :userId AND p.entryType = com.artur_sres.multinova.domain.enums.StockEntryType.PAID "
+            + "AND p.purchaseDate BETWEEN :from AND :to")
     BigDecimal sumByUserAndPeriod(@Param("userId") Long userId,
             @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
