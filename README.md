@@ -1,270 +1,266 @@
 # MultiNova API
 
-### Customer summaries, exports and discounts
+Backend REST do **MultiNova**, um sistema de gestão para pequenos negócios. A API concentra catálogo, estoque, clientes, vendas, contas, entradas e saídas de caixa, painel financeiro e histórico de operações. Os dados de cada usuário são isolados por autenticação JWT.
 
-Migration V29 preserves product names on sale items and customer names on ledger
-entries. Existing names are recovered from the available current records and
-explicitly marked as recovered; subsequent renames do not rewrite new snapshots.
-The customer statement includes sale items (quantity, unit price and subtotal),
-source references, cancellation status and linked reversal reasons. Balances
-continue to follow recording order, independently of the effective date.
+## Sumário
 
-Authenticated receipt endpoints:
+- [Recursos](#recursos)
+- [Tecnologias e requisitos](#tecnologias-e-requisitos)
+- [Configuração local](#configuração-local)
+- [Executar a aplicação](#executar-a-aplicação)
+- [Autenticação](#autenticação)
+- [Visão da API](#visão-da-api)
+- [Regras de negócio importantes](#regras-de-negócio-importantes)
+- [Imagens locais](#imagens-locais)
+- [Banco de dados e migrations](#banco-de-dados-e-migrations)
+- [Testes](#testes)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Respostas de erro](#respostas-de-erro)
 
-- `GET /customers/{customerId}/statement/{entryId}/receipt`
-- `GET /sales/{id}/receipt`
-- `GET /customers/{customerId}/statement/export?limit=50` (1–500 most recent entries)
+## Recursos
 
-Receipts are available for customer purchases (sales) and payments, including
-explicit cancelled/reversed status. They include the current customer name and
-balance in a consistent snapshot at issuance, alongside the historical entry.
-The customer-facing summary shows the action, products, discounts and current
-amount due, available credit or settled balance. A purchase never declares payment; payments apply
-to the customer's overall balance and are not allocated to individual sales.
-These are symbolic, non-fiscal records. No public links or messaging service is
-created. The frontend lets the user share/copy text, download text or PNG, or print/PDF.
-History export includes purchases, payments, cancellations and other account
-movements with item details, and explicitly signals when older entries are omitted.
+- Cadastro, verificação de e-mail, login e recuperação de senha.
+- Produtos, marcas, categorias e histórico de preços.
+- Controle de estoque por compras/entradas e vendas; estoque não pode ser alterado diretamente pelo endpoint de produto.
+- Clientes, pagamentos, débitos e extrato com reversão de lançamentos.
+- Vendas com itens, desconto por item e cancelamento.
+- Contas a pagar, entradas e saídas de caixa.
+- Resumo financeiro por período e histórico de operações.
+- Comprovantes de venda/pagamento e exportação do extrato do cliente.
+- Upload privado de imagens de produtos e clientes.
 
-Migration V31 adds per-item discounts. `POST /sales` accepts `discountType`
-(`NONE`, `PERCENTAGE`, `AMOUNT`) and `discountValue` on each item. The original
-`unitPrice` is preserved. Discounts apply to `quantity × unitPrice`; percentages
-round once per line to cents (HALF_UP), and fixed amounts are per line, not per
-unit. The server validates limits and calculates `discountAmount`, `subtotal`
-and the sale total. Debt, dashboard totals and cancellation use the net total.
-Old items retain zero discount. Deploy frontend and backend together.
+## Tecnologias e requisitos
 
-History filters apply automatically with a 300 ms debounce. Period filters on
-the dashboard, bills and sales apply on valid changes. History, customer data,
-statements and dashboard queries refresh after successful mutations, changes
-in another tab, reconnecting or returning to the app. Requests are cancelled
-when superseded; transient failures retry twice without continuous polling.
+| Componente | Versão/uso |
+| --- | --- |
+| Java | JDK 21 |
+| Framework | Spring Boot 4.1 |
+| Banco | PostgreSQL |
+| Persistência | Spring Data JPA / Hibernate |
+| Evolução de schema | Flyway |
+| Segurança | Spring Security, JWT e BCrypt |
+| Mapeamento | MapStruct |
+| Build | Maven Wrapper |
 
-Validation: `powershell -ExecutionPolicy Bypass -File src/test/test-history.ps1 -StatementTests`
-applies all migrations to an isolated test database and tests item/name snapshots,
-balances, reversals, cancellation states and receipt ownership. Run the frontend
-checks with `npm run lint`, `npm run build`, `npm test`; after building, Windows
-users with Edge can run `node tests/browser-history.cjs` for a mocked-API browser
-test of automatic search, pagination reset, statement details, sharing and PNG.
+Para executar localmente, instale o JDK 21 e tenha um PostgreSQL acessível. Não é necessário instalar Maven: o projeto inclui `mvnw` e `mvnw.cmd`.
 
-### Local product and customer images
+O envio de e-mails usa SMTP; para desenvolvimento, a configuração atual é compatível com uma caixa de entrada do Mailtrap.
 
-Product and customer forms accept JPEG/PNG uploads up to 5 MB. The backend
-checks the decoded format and rejects images over 20 megapixels, then resizes
-to at most 1200 pixels per side and writes a fresh PNG without original metadata.
-No cloud account or paid service is required.
+## Configuração local
 
-Start the backend from `multinova-backend`; images are created in `uploads/`
-inside that working directory. The directory is ignored by Git and survives
-rebuilds. Set `IMAGE_STORAGE_DIRECTORY` to an absolute path if launching the
-backend from different working directories. Keep the database and this folder
-together when moving or backing up local data.
+1. Crie um banco PostgreSQL vazio chamado `multinova` (ou ajuste a URL em `src/main/resources/application.properties`).
+2. Copie `.env.example` para `.env`.
+3. Preencha as variáveis abaixo. O arquivo `.env` é ignorado pelo Git e não deve ser versionado.
 
-Flyway migration V28 adds nullable image keys, preserving existing image URLs.
-Restart the backend to apply it. `PUT` (multipart field `file`), `GET`, and
-`DELETE` are available at `/products/{id}/image` and `/customers/{id}/photo`.
-Every operation requires JWT authentication and checks record ownership. The
-frontend fetches private images with the Authorization header and displays a
-temporary browser object URL; the uploads directory is not publicly served.
+```dotenv
+DB_PASSWORD=sua-senha-do-postgres
+JWT_SECRET=uma-chave-longa-e-aleatoria
+MAILTRAP_USERNAME=seu-usuario-smtp
+MAILTRAP_PASSWORD=sua-senha-smtp
+```
 
-Replacing/removing a photo deletes the previous local file after database
-commit; a rolled-back replacement deletes the new file. Abrupt process or disk
-failures can still leave orphan files. Soft-deleted products retain their files
-but cannot serve them. This implementation is intended for local development.
+Variáveis opcionais:
 
-When creating a record, its data is saved before the photo. If uploading fails,
-the form reports that the record was saved and retries using its existing ID.
+| Variável | Padrão | Finalidade |
+| --- | --- | --- |
+| `IMAGE_STORAGE_DIRECTORY` | `uploads` | Diretório onde as imagens locais são gravadas. Use um caminho absoluto quando a aplicação for iniciada de outro diretório. |
 
-Validation: `mvn "-Dtest=ImageStorageServiceTests,CatalogImageServiceTests" test`
-covers file validation, resizing, persistence, ownership checks and transaction
-cleanup. Frontend checks: `npm run lint`, `npm run build`, and `npm test`.
+As demais propriedades ficam em [`application.properties`](src/main/resources/application.properties). A conexão padrão é `jdbc:postgresql://localhost:5432/multinova`, com usuário `postgres`.
 
-**Backend REST API for MultiNova, a small-business management system for products, inventory, customers, sales, and bills.**
+## Executar a aplicação
 
-![Java](https://img.shields.io/badge/Java-21-blue)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-brightgreen)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-336791)
-![License](https://img.shields.io/badge/status-personal%20project-lightgrey)
+No PowerShell, a partir da raiz deste repositório:
 
-The application is built with Spring Boot and PostgreSQL. It uses JWT authentication, email verification and password recovery, Flyway database migrations, Bean Validation, and MapStruct.
+```powershell
+.\mvnw.cmd spring-boot:run
+```
 
----
+No Linux/macOS:
 
-## Table of Contents
+```bash
+./mvnw spring-boot:run
+```
 
-- [Features](#features)
-- [Tech stack](#tech-stack)
-- [Requirements](#requirements)
-- [API overview](#api-overview)
-- [Project structure](#project-structure)
+Na primeira execução, o Flyway aplica automaticamente todas as migrations em `src/main/resources/db/migration`. Para gerar o artefato e executar os testes:
 
+```powershell
+.\mvnw.cmd clean verify
+```
 
----
+Por padrão, a aplicação Spring Boot atende em `http://localhost:8080`.
 
-## Features
+## Autenticação
 
-- User registration, email verification, login, and password recovery
-- JWT-protected API endpoints
-- Product, category, and brand management
-- Historical purchase and sale prices per product
-- Customer management
-- Sales with line items and automatic stock validation
-- Bill creation, listing, and payment tracking
-- User-scoped data access
-- Centralized validation and error responses
+Somente estes endpoints são públicos:
 
-## Tech stack
+- `POST /users` — cadastro;
+- `POST /auth/login` — login;
+- `POST /auth/verify` — confirmação de e-mail;
+- `POST /auth/forgot-password` — solicitação de código de redefinição;
+- `POST /auth/reset-password` — redefinição de senha.
 
-- Java 21
-- Spring Boot 4.1
-- Spring Web MVC
-- Spring Security
-- Spring Data JPA / Hibernate
-- PostgreSQL
-- Flyway
-- JWT
-- MapStruct
-- Maven Wrapper
+Os demais exigem o cabeçalho:
 
-## Requirements
+```http
+Authorization: Bearer <token JWT>
+```
 
-- Java Development Kit (JDK) 21
-- PostgreSQL running locally or accessible over the network
-- A Mailtrap SMTP inbox for development email delivery
+Exemplo de login:
 
-You do not need to install Maven separately; the repository includes the Maven Wrapper.
+```http
+POST /auth/login
+Content-Type: application/json
 
-## API overview
+{
+  "email": "usuario@exemplo.com",
+  "password": "senha-com-ao-menos-8-caracteres"
+}
+```
 
-| Resource | Method and path | Description | Public |
-| --- | --- | --- | :---: |
-| Authentication | `POST /auth/login` | Log in | Yes |
-| Authentication | `POST /auth/verify` | Verify an email address | Yes |
-| Authentication | `POST /auth/forgot-password` | Request a password reset code | Yes |
-| Authentication | `POST /auth/reset-password` | Reset a password | Yes |
-| Users | `POST /users` | Register a user | Yes |
-| Users | `GET /users/{id}` | Get a user | No |
-| Users | `PATCH /users/{id}` | Update a user | No |
-| Products | `POST /products` | Create a product | No |
-| Products | `GET /products` | List products | No |
-| Products | `GET /products/{id}` | Get a product | No |
-| Products | `PATCH /products/{id}` | Update a product | No |
-| Products | `DELETE /products/{id}` | Soft-delete a product | No |
-| Prices | `POST /products/{productId}/prices` | Add a price | No |
-| Prices | `GET /products/{productId}/prices` | List price history | No |
-| Prices | `GET /products/{productId}/prices/current` | Get the current price | No |
-| Categories | `POST /categories` | Create a category | No |
-| Categories | `GET /categories` | List categories | No |
-| Categories | `GET /categories/{id}` | Get a category | No |
-| Categories | `PUT /categories/{id}` | Replace a category | No |
-| Categories | `DELETE /categories/{id}` | Delete a category | No |
-| Brands | `POST /brands` | Create a brand | No |
-| Brands | `GET /brands` | List brands | No |
-| Brands | `GET /brands/{id}` | Get a brand | No |
-| Brands | `PUT /brands/{id}` | Replace a brand | No |
-| Brands | `DELETE /brands/{id}` | Delete a brand | No |
-| Customers | `POST /customers` | Create a customer | No |
-| Customers | `GET /customers` | List customers | No |
-| Customers | `GET /customers/{id}` | Get a customer | No |
-| Customers | `PATCH /customers/{id}` | Update a customer | No |
-| Customers | `DELETE /customers/{id}` | Delete a customer | No |
-| Sales | `POST /sales` | Create a sale | No |
-| Sales | `GET /sales` | List sales | No |
-| Sales | `DELETE /sales/{id}` | Cancel a sale | No |
-| Bills | `POST /bills` | Create a bill | No |
-| Bills | `GET /bills` | List bills | No |
-| Bills | `GET /bills/{id}` | Get a bill | No |
-| Bills | `PATCH /bills/{id}/pay` | Mark a bill as paid | No |
+O retorno contém o token a ser usado nas chamadas autenticadas. A configuração CORS permite, atualmente, `http://localhost:5173` e `http://127.0.0.1:5500`.
 
-## Project structure
+## Visão da API
 
-### Cash entries and operation history
+Todos os endpoints desta tabela, exceto os de autenticação/cadastro acima, requerem JWT. IDs na rota são numéricos.
 
-Migration V22 adds cash entries. `POST /cash-entries` accepts `title`, `kind`
-(`LOAN`, `CAPITAL`, `OTHER`), a positive `amount`, `receivedOn` (today or earlier),
-and optional `description`. `GET /cash-entries` returns the user's latest 100
-entries by receipt date. These endpoints always use the authenticated user.
+| Área | Endpoints principais |
+| --- | --- |
+| Usuários | `GET/PATCH /users/{id}` |
+| Marcas e categorias | `POST/GET /brands`, `GET/PUT/DELETE /brands/{id}`; mesma estrutura para `/categories` |
+| Produtos | `POST/GET /products`, `GET/PATCH/DELETE /products/{id}` |
+| Preços | `POST/GET /products/{productId}/prices`, `GET /products/{productId}/prices/current` |
+| Imagens | `PUT/GET/DELETE /products/{id}/image`; `PUT/GET/DELETE /customers/{id}/photo` |
+| Clientes | `POST/GET /customers`, `GET/PATCH/DELETE /customers/{id}` |
+| Débitos e pagamentos | `POST /customers/{customerId}/debts`; `POST /customer-payments`; `GET /customer-payments?customerId={id}` |
+| Extrato | `GET /customers/{customerId}/statement?page=0`; `POST /customers/{customerId}/statement/{entryId}/reverse`; `GET /customers/{customerId}/statement/export?limit=50`; `GET /customers/{customerId}/statement/{entryId}/receipt` |
+| Vendas | `POST/GET /sales`, `DELETE /sales/{id}`, `GET /sales/{id}/receipt` |
+| Estoque | `POST/GET /stock-purchases` |
+| Contas | `POST/GET /bills`, `GET /bills/{id}`, `PATCH /bills/{id}/pay`, `DELETE /bills/{id}`. A lista aceita `?status=`. |
+| Caixa | `POST/GET /cash-entries`, `POST/GET /cash-exits` |
+| Indicadores | `GET /dashboard/summary?from=AAAA-MM-DD&to=AAAA-MM-DD` |
+| Histórico | `GET /history?category=all&search=&from=AAAA-MM-DD&to=AAAA-MM-DD&page=0` |
 
-The dashboard adds `otherIncome`, summed by receipt date, and calculates
-`periodBalance = received + otherIncome - billsPaid - otherOutflow`. Cash entries do
-not change sales, customer debt, or bills. Loan repayments are separate bills.
+### Formatos mais usados
 
-Migration V23 creates an indexed operation history. PostgreSQL triggers capture
-snapshots inside the source transaction for sales, cancellations, stock purchases,
-customer/product creation and personal/catalog changes, customer payments,
-bill creation/payment/deletion, and cash entries. Stock/debt changes alone do not
-generate duplicate edit events. A rolled-back transaction leaves no history.
-The history has no foreign key to the source entity, so later deletion preserves
-the snapshot. `GET /history` returns only the authenticated user's latest 100
-events, ordered by operation time and ID descending.
+Criar produto requer o preço inicial:
 
-Existing recoverable events are backfilled and marked `recovered`. Their dates
-come from surviving records (including the last update date for old cancelled
-sales). Previously deleted records and unrecorded operations cannot be recovered.
-Backfill does not create financial movements or modify existing balances.
+```json
+{
+  "name": "Camiseta básica",
+  "brandId": 1,
+  "categoryId": 2,
+  "brandCode": "CAM-001",
+  "stock": 10,
+  "price": { "purchasePrice": 25.00, "salePrice": 49.90 }
+}
+```
 
-Verification: `mvn -Dtest=*ServiceTests test` covers cash validation, user scope,
-and dashboard arithmetic. `src/test/test-history.ps1` runs all migrations and the
-SQL regression checks against an isolated PostgreSQL 18 cluster initialized at
-`target/history-test-pg`, listening only on localhost port 55439. It checks the
-cluster's data directory before writing and stops the test server on completion.
-The SQL checks cover recovery, rollback, cancellation/payment idempotence,
-deletion preservation, snapshots, scope, dates and the 100-event limit.
+Criar uma venda:
 
-### Bills
+```json
+{
+  "customerId": 1,
+  "items": [
+    {
+      "productId": 12,
+      "quantity": 2,
+      "unitPrice": 49.90,
+      "discountType": "PERCENTAGE",
+      "discountValue": 10
+    }
+  ]
+}
+```
 
-Bills accept an optional `description` in `POST /bills`, returned by the listing
-and detail responses. Migration `V21__add_bill_description.sql` adds the nullable
-text column, preserving existing bills. Responses also include `paidAt`.
+`discountType` aceita `NONE`, `PERCENTAGE` e `AMOUNT`. O desconto é calculado no servidor sobre a linha inteira (`quantidade × preço unitário`), preservando o preço unitário original.
 
-Bill details are immutable. `PATCH /bills/{id}/pay` records payment once, and
-`DELETE /bills/{id}` removes the bill. Pending bills contribute to the dashboard's
-global payable total; paid bills contribute to period expenses according to
-`paidAt`, not their due date. Deleting a paid bill also removes it from the paid
-total for that period. All operations are scoped to the authenticated user.
+Uma entrada de estoque aceita `entryType` `ADJUSTMENT`, `PAID` ou `PENDING`. Para `PENDING`, informe `dueDate`; o sistema cria a conta pendente correspondente.
 
-### Inventory entries and the dashboard
+## Regras de negócio importantes
 
-`POST /products` with positive `stock` now records an initial stock purchase using
-`stock × price.purchasePrice`, dated at creation time, as an `ADJUSTMENT` without payment. Product creation, pricing,
-and the purchase share one transaction; a failure rolls back the whole operation.
-Creating a product with zero stock does not create a purchase.
+- O acesso a registros é limitado ao usuário autenticado.
+- Produtos são excluídos logicamente; o histórico de preços e imagens é preservado conforme as regras do serviço.
+- Alterar `stock` com `PATCH /products/{id}` é rejeitado. Use compras de estoque e vendas para que os movimentos tenham rastreabilidade.
+- A criação de produto com estoque positivo registra uma entrada inicial de ajuste, sem efeito de caixa.
+- Entradas `PAID` e contas pagas entram no cálculo financeiro pela data de pagamento; entradas `ADJUSTMENT` e `PENDING` não reduzem o caixa imediatamente.
+- Uma venda reduz o estoque e atualiza o saldo do cliente; cancelar a venda reverte esses efeitos.
+- Pagamentos de clientes são aplicados ao saldo geral, não a uma venda específica.
+- O extrato mantém snapshots de nome e itens. Alterações posteriores no cadastro não reescrevem o histórico.
+- O histórico de operações é gravado por triggers PostgreSQL na mesma transação da operação de origem; uma transação revertida não deixa evento registrado.
 
-Subsequent entries use `POST /stock-purchases`, supplying the quantity and actual
-unit cost of that purchase, with `entryType`: `ADJUSTMENT` (default, no cash effect),
-`PAID` (paid today), or `PENDING` (requires `dueDate` and creates a pending bill in
-the same transaction). The dashboard groups `PAID` and `PENDING` entries in
-`purchased`, a commercial metric that is not subtracted from the balance.
-`billsPaid` combines payments made immediately on stock entry and paid bills.
-Paying a pending bill affects `billsPaid` on its payment date, without counting
-the stock entry twice. Migration V30 preserves existing entries as `PAID` because
-their original payment state is unknown. Noncash entries use `STOCK_ENTRY` in
-history and are excluded from financial filters. Historical purchase
-amounts are independent of changes to the product's price records.
+## Imagens locais
 
-`PATCH /products/{id}` rejects changes to the stock balance with HTTP 409. An
-unchanged stock value remains accepted for compatibility. Stock movements must
-go through purchases or sales so that balances cannot be changed silently.
+As imagens de produto e cliente são privadas: não há rota pública para a pasta de arquivos. Os endpoints autenticados retornam o conteúdo da imagem após validar a propriedade do registro.
 
-Existing products are not backfilled automatically: quantities, costs and dates
-from before this fix must be reconciled against real purchase records first.
+- Formato aceito: JPEG ou PNG.
+- Limite do upload: 5 MB.
+- Limite da imagem decodificada: 20 megapixels.
+- A imagem é redimensionada para até 1200 px em cada lado e armazenada como PNG sem metadados originais.
+- Por padrão, os arquivos ficam em `uploads/` na raiz de execução; a pasta é ignorada pelo Git.
 
-Service regression tests: `mvn -Dtest=*ServiceTests test`.
+Ao fazer backup ou migrar uma instalação, mantenha o banco de dados e o diretório de imagens juntos.
+
+## Banco de dados e migrations
+
+O Flyway executa arquivos versionados em `src/main/resources/db/migration`. Em ambientes compartilhados, migrations já aplicadas não devem ser renomeadas, removidas ou alteradas: isso muda o checksum e impede a validação do histórico.
+
+O projeto usa `spring.jpa.hibernate.ddl-auto=validate`, portanto o Hibernate apenas valida se o schema produzido pelas migrations corresponde às entidades; ele não cria ou altera tabelas automaticamente.
+
+## Testes
+
+Executar toda a suíte Maven:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Executar os testes de serviços:
+
+```powershell
+.\mvnw.cmd "-Dtest=*ServiceTests" test
+```
+
+Há também uma verificação de migrations e histórico que inicia um PostgreSQL temporário e isolado na porta local `55439`. Ela exige PostgreSQL 18 instalado em `C:\Program Files\PostgreSQL\18\bin` (ajuste o script se necessário):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File src/test/test-history.ps1 -StatementTests
+```
+
+O script aplica todas as migrations, executa fixtures SQL e valida recuperação de histórico, reversões, escopo por usuário, cancelamentos, saldos e comprovantes.
+
+## Estrutura do projeto
 
 ```text
-src/main/java/com/artur_sres/multinova/
-|-- config/       Security and application configuration
-|-- controller/   HTTP endpoints
-|-- domain/       JPA entities and enums
-|-- dto/          Request and response models
-|-- exception/    Domain exceptions and global error handling
-|-- mapper/       MapStruct mappers
-|-- repository/   Spring Data repositories
-|-- security/     JWT authentication filter and user context
-|-- service/      Business rules and use cases
-`-- util/         Shared utilities
-
-src/main/resources/
-|-- application.properties
-`-- db/migration/ Flyway SQL migrations
+src/
+├── main/
+│   ├── java/com/artur_sres/multinova/
+│   │   ├── config/       Configurações de segurança e aplicação
+│   │   ├── controller/   Endpoints HTTP
+│   │   ├── domain/       Entidades JPA e enums
+│   │   ├── dto/          Contratos de entrada e saída da API
+│   │   ├── exception/    Exceções de domínio e tratamento global
+│   │   ├── mapper/       Mapeadores MapStruct
+│   │   ├── repository/   Acesso a dados
+│   │   ├── security/     Filtro JWT e contexto do usuário
+│   │   ├── service/      Casos de uso e regras de negócio
+│   │   └── util/         Utilitários
+│   └── resources/
+│       ├── application.properties
+│       └── db/migration/ Migrations Flyway
+└── test/
+    ├── java/             Testes de unidade e integração
+    └── *.sql, *.ps1      Fixtures e validação de migrations
 ```
+
+## Respostas de erro
+
+Erros da API seguem, em geral, este formato:
+
+```json
+{
+  "message": "Descrição do erro",
+  "status": 400
+}
+```
+
+Os códigos mais comuns são `400` para dados inválidos, `401` para token ausente/inválido, `403` para recurso sem permissão, `404` para recurso não encontrado, `409` para conflitos de negócio e `413` para upload acima do limite.
